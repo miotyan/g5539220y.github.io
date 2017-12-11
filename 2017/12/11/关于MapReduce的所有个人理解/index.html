@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>拯救笔记----流量汇总排序mr程序 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）运行mr程序有三个进程 MRAppMaster：负责整个程序的过程调度及状态协调 mapTask：负责map阶段的数据处理流程 ReduceTask：负责reduce阶段的数据处理流程  mr程序运行第一步：文件切片文件的切片是由File">
+<meta name="keywords" content="MapReduce">
+<meta property="og:type" content="article">
+<meta property="og:title" content="拯救笔记----流量汇总排序mr程序">
+<meta property="og:url" content="http://yoursite.com/2017/12/11/关于MapReduce的所有个人理解/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）运行mr程序有三个进程 MRAppMaster：负责整个程序的过程调度及状态协调 mapTask：负责map阶段的数据处理流程 ReduceTask：负责reduce阶段的数据处理流程  mr程序运行第一步：文件切片文件的切片是由File">
+<meta property="og:updated_time" content="2017-12-11T10:14:37.540Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="拯救笔记----流量汇总排序mr程序">
+<meta name="twitter:description" content="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）运行mr程序有三个进程 MRAppMaster：负责整个程序的过程调度及状态协调 mapTask：负责map阶段的数据处理流程 ReduceTask：负责reduce阶段的数据处理流程  mr程序运行第一步：文件切片文件的切片是由File">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-关于MapReduce的所有个人理解" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      拯救笔记----流量汇总排序mr程序
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/11/关于MapReduce的所有个人理解/" class="article-date">
+  <time datetime="2017-12-11T10:14:00.000Z" itemprop="datePublished">2017-12-11</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"><a href="#MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。" class="headerlink" title="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"></a>MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。</h1><h3 id="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"><a href="#mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）" class="headerlink" title="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"></a>mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）</h3><h3 id="运行mr程序有三个进程"><a href="#运行mr程序有三个进程" class="headerlink" title="运行mr程序有三个进程"></a>运行mr程序有三个进程</h3><ol>
+<li>MRAppMaster：负责整个程序的过程调度及状态协调</li>
+<li>mapTask：负责map阶段的数据处理流程</li>
+<li>ReduceTask：负责reduce阶段的数据处理流程</li>
+</ol>
+<h2 id="mr程序运行第一步：文件切片"><a href="#mr程序运行第一步：文件切片" class="headerlink" title="mr程序运行第一步：文件切片"></a>mr程序运行第一步：文件切片</h2><p>文件的切片是由FileInputFormat实现类的getSplits()方法完成，先读取目录，然后遍历所有文件，获取文件大小fs.sizeOf(文件名),计算切片大小<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">computerSplitSize(Math.max(minSize.Math.max(maxSize.blocksize))=blocksize=128M</div></pre></td></tr></table></figure></p>
+<p>blocksize 默认128M，hdfs一个文件的大小，mr程序为了防止不必要的网络传输问题，默认设置为和hdfs中的文件切片一样大</p>
+<p>比如：</p>
+<blockquote>
+<p>有两个文件 gy.txt 大小为 200M haihan.txt 大小为8M </p>
+</blockquote>
+<p>切片后为</p>
+<blockquote>
+<p>gy.txt.split1 0~128M  gy.txt.split2 128M~200M haihan.txt.split 0~8M</p>
+</blockquote>
+<p>由此可见，小文件越多效率越低，注意上传文件时的合并或写一个小mr文件来合并、或者用Inputformat中的CombineInputFormat。</p>
+<p>如果文件太大了，就把hdfs上的切片blocksize变大</p>
+<blockquote>
+<h4 id="设置reduce运行个数"><a href="#设置reduce运行个数" class="headerlink" title="设置reduce运行个数"></a>设置reduce运行个数</h4><p>job.setNumReduceTasks(4);</p>
+</blockquote>
+<p>如设置的数据分布不均匀，就有可能在reduce阶段产生数据倾斜（好多数据都跑一个reducetask里面了）<br>注意： reducetask数量并不是任意设置，还要考虑业务逻辑需求，有些情况下，需要计算全局汇总结果，就只能有1个reducetask</p>
+<blockquote>
+<p>尽量不要运行太多的reduce task。对大多数job来说，最好rduce的个数最多和集群中的reduce持平，或者比集群的 reduce slots小。这个对于小集群而言，尤其重要。</p>
+</blockquote>
+<p>运行后的maptask调用Inputformat （这货是个抽象类有好多实现 mr程序主要用 FileInputformat下的TextInputFormat（文本文件）和SequenceFileInpitFormat(））InputFormat调用RecordReader来读文件切切切，读好后传给map方法。</p>
+<h2 id="mr程序运行第二步："><a href="#mr程序运行第二步：" class="headerlink" title="mr程序运行第二步："></a>mr程序运行第二步：</h2><p>调用map方法拿到kv对，运行map逻辑后（map逻辑是由自己瞎写的跟人家框架没关系），通过context.write写出到内部组件OutPutCollector（收集器~框架给的咱们动不了）</p>
+<h2 id="mr程序运行第三步："><a href="#mr程序运行第三步：" class="headerlink" title="mr程序运行第三步："></a>mr程序运行第三步：</h2><p>OutPutCollector把自己瞎写的逻辑以及自己定义的输出 输出到一个环形缓冲区（这个内存一共默认100M，学名环形缓冲区内存，就是个环形数组队列！但只能写80%）<br>spiller这个东西负责把缓冲区分区并把数据排序并溢出到文件到内存中，排序用内存就是用剩下那个20%。</p>
+<p>spiller这个分区就是Partitoner 默认为HashPartitioner （HashCode Mod 2）</p>
+<p>排序则是快速排序KeycomparorTo，这里所有的排序都是以key来排序</p>
+<p>比如：</p>
+<blockquote>
+<p>排序前：a1，c1，b1，a1，b1 排序后：（a1，a1，c1）（b1，b1）</p>
+</blockquote>
+<p>然后从内存写出来写到文件中（溢出一次写一次，产生一个文件，可能为多个文件）文件就在maptask工作目录里面，溢出的结果都是分区且区内有序的。<br>当最后一次溢出完，把剩下的没满的一次溢出。溢出后marge（归并）成一个大文件。</p>
+<h3 id="效率提高大法：conbiner组件（预先reduce）"><a href="#效率提高大法：conbiner组件（预先reduce）" class="headerlink" title="效率提高大法：conbiner组件（预先reduce）"></a>效率提高大法：conbiner组件（预先reduce）</h3><p>为了防止在溢出reduce时过慢，conbiner组件可以在mapTask本地时将文件进行reduce 以及在合并文件后进行reduce<br>这个可以自定义！！！！！！</p>
+<h2 id="mr程序运行第四步："><a href="#mr程序运行第四步：" class="headerlink" title="mr程序运行第四步："></a>mr程序运行第四步：</h2><p>说明：reduceTask的数量与spiller分的区没有直接关系，reduceTask的数量由我自己定的或框架默认。当然要想办法让它们对应起来</p>
+<p>比如：</p>
+<blockquote>
+<p>key.hashCode % numreduce</p>
+</blockquote>
+<p>reduceTask下载mapTask归并的文件到reduceTask的机器本地磁盘目录，然后再次合并</p>
+<p>比如：</p>
+<blockquote>
+<p>a1，a1，c1，b1，b1</p>
+</blockquote>
+<p>此时reducer中的reduce方法调用</p>
+<h3 id="GroupingComparor（k，next-k）"><a href="#GroupingComparor（k，next-k）" class="headerlink" title="GroupingComparor（k，next k）"></a>GroupingComparor（k，next k）</h3><p>方法来判断谁和谁相同，可以自己定义文件中的k相同,传入k和v的迭代器，把所有相同的k合并成一个k，这个k带一组v<br>然后context.write()</p>
+<h3 id="mr程序运行第五步："><a href="#mr程序运行第五步：" class="headerlink" title="mr程序运行第五步："></a>mr程序运行第五步：</h3><p>reduceTask调用OutputFormat中的TextOutputFormat，RecordWriter write（k，v）写到HDFS中，名字为part-1-000000</p>
+<h2 id="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"><a href="#shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！" class="headerlink" title="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"></a>shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！</h2><p>听着很屌其实就是那么一回事</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/12/11/拯救笔记----流量汇总排序mr程序/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">拯救笔记----流量汇总排序mr程序</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2017 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
