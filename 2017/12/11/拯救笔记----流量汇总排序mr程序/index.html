@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>拯救笔记----流量汇总排序mr程序 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="需求：对一段网络流量日志进行清洗，然后排序输出map阶段String line = value.toString(); String[] fields = line.split(&amp;quot;\t&amp;quot;); long num =Long.parseLong(fields[1]); long up = Long.parseLong(fields[fields.length-1]); long d">
+<meta name="keywords" content="MapReduce">
+<meta property="og:type" content="article">
+<meta property="og:title" content="拯救笔记----流量汇总排序mr程序">
+<meta property="og:url" content="http://yoursite.com/2017/12/11/拯救笔记----流量汇总排序mr程序/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="需求：对一段网络流量日志进行清洗，然后排序输出map阶段String line = value.toString(); String[] fields = line.split(&amp;quot;\t&amp;quot;); long num =Long.parseLong(fields[1]); long up = Long.parseLong(fields[fields.length-1]); long d">
+<meta property="og:updated_time" content="2017-12-11T03:45:34.815Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="拯救笔记----流量汇总排序mr程序">
+<meta name="twitter:description" content="需求：对一段网络流量日志进行清洗，然后排序输出map阶段String line = value.toString(); String[] fields = line.split(&amp;quot;\t&amp;quot;); long num =Long.parseLong(fields[1]); long up = Long.parseLong(fields[fields.length-1]); long d">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-拯救笔记----流量汇总排序mr程序" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      拯救笔记----流量汇总排序mr程序
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/11/拯救笔记----流量汇总排序mr程序/" class="article-date">
+  <time datetime="2017-12-11T03:45:00.000Z" itemprop="datePublished">2017-12-11</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="需求：对一段网络流量日志进行清洗，然后排序输出"><a href="#需求：对一段网络流量日志进行清洗，然后排序输出" class="headerlink" title="需求：对一段网络流量日志进行清洗，然后排序输出"></a>需求：对一段网络流量日志进行清洗，然后排序输出</h2><h3 id="map阶段"><a href="#map阶段" class="headerlink" title="map阶段"></a>map阶段</h3><pre><code>String line = value.toString();
+String[] fields = line.split(&quot;\t&quot;);
+long num =Long.parseLong(fields[1]);
+long up = Long.parseLong(fields[fields.length-1]);
+long down = Long.parseLong(fields[fields.length-2]);
+IntWritable V = new IntWritable(1);
+flowbean K = new flowbean(up, down,num);
+context.write(K,V);
+</code></pre><h3 id="超级垃圾无脑版本代码-就是切切切-然后构造一个bean"><a href="#超级垃圾无脑版本代码-就是切切切-然后构造一个bean" class="headerlink" title="超级垃圾无脑版本代码 就是切切切 然后构造一个bean"></a>超级垃圾无脑版本代码 就是切切切 然后构造一个bean</h3><h3 id="把上传流量和下载流量还有手机号传进去"><a href="#把上传流量和下载流量还有手机号传进去" class="headerlink" title="把上传流量和下载流量还有手机号传进去"></a>把上传流量和下载流量还有手机号传进去</h3><h3 id="实验了几次，发现map阶段不能传空值！new了一个-IntWritable-过去。"><a href="#实验了几次，发现map阶段不能传空值！new了一个-IntWritable-过去。" class="headerlink" title="实验了几次，发现map阶段不能传空值！new了一个 IntWritable 过去。"></a>实验了几次，发现map阶段不能传空值！new了一个 IntWritable 过去。</h3><h3 id="为了防止new的IntWritable对象太多，就传一个了。"><a href="#为了防止new的IntWritable对象太多，就传一个了。" class="headerlink" title="为了防止new的IntWritable对象太多，就传一个了。"></a>为了防止new的IntWritable对象太多，就传一个了。</h3><h4 id="内部过程"><a href="#内部过程" class="headerlink" title="内部过程"></a>内部过程</h4><p>flowbean,1</p>
+<p>flowbean,1</p>
+<p>flowbean,1</p>
+<p>flowbean,1<br>每个flowbean对象都不等，不用担心到reduce阶段合并的问题。</p>
+<h3 id="对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。"><a href="#对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。" class="headerlink" title="对于排序 在flowbean类中实现WritableComparable接口 然后重写compareTo方法，在compareTo里面写排序逻辑。"></a>对于排序 在flowbean类中实现WritableComparable<t>接口 然后重写compareTo方法，在compareTo里面写排序逻辑。</t></h3><h3 id="reduce阶段"><a href="#reduce阶段" class="headerlink" title="reduce阶段"></a>reduce阶段</h3><h4 id="直接无脑输出！"><a href="#直接无脑输出！" class="headerlink" title="直接无脑输出！"></a>直接无脑输出！</h4><pre><code>context.write(key, null);
+</code></pre><h4 id="这次可以用空值搞定了！"><a href="#这次可以用空值搞定了！" class="headerlink" title="这次可以用空值搞定了！"></a>这次可以用空值搞定了！</h4><h2 id="出现的麻烦"><a href="#出现的麻烦" class="headerlink" title="出现的麻烦"></a>出现的麻烦</h2><h3 id="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"><a href="#每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番" class="headerlink" title="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"></a>每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番</h3><h3 id="最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！"><a href="#最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！" class="headerlink" title="最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！"></a>最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！</h3><h3 id="Ps：write和readFields-这俩方法中的变量必须按顺序写！"><a href="#Ps：write和readFields-这俩方法中的变量必须按顺序写！" class="headerlink" title="Ps：write和readFields 这俩方法中的变量必须按顺序写！"></a>Ps：write和readFields 这俩方法中的变量必须按顺序写！</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/09/25/关于JAVA的一些小记/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">关于JAVA的一些小记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2017 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
