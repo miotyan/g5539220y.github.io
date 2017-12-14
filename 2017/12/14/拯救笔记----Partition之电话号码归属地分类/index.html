@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>拯救笔记----Partition之电话号码归属地分类 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="需求：接着上一个流量汇总排序的写，把电话号码分类归省原理：自定义partition。通过继承partition的类，来重写getPartition方法Partition：在map阶段的收集器到缓冲区排序后的一个分区组件，为maptask的数据分组从而发送到reduceTask123456789101112131415161718public class ProvincePartitioner ex">
+<meta name="keywords" content="MapReduce">
+<meta property="og:type" content="article">
+<meta property="og:title" content="拯救笔记----Partition之电话号码归属地分类">
+<meta property="og:url" content="http://yoursite.com/2017/12/14/拯救笔记----Partition之电话号码归属地分类/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="需求：接着上一个流量汇总排序的写，把电话号码分类归省原理：自定义partition。通过继承partition的类，来重写getPartition方法Partition：在map阶段的收集器到缓冲区排序后的一个分区组件，为maptask的数据分组从而发送到reduceTask123456789101112131415161718public class ProvincePartitioner ex">
+<meta property="og:updated_time" content="2017-12-14T13:26:52.333Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="拯救笔记----Partition之电话号码归属地分类">
+<meta name="twitter:description" content="需求：接着上一个流量汇总排序的写，把电话号码分类归省原理：自定义partition。通过继承partition的类，来重写getPartition方法Partition：在map阶段的收集器到缓冲区排序后的一个分区组件，为maptask的数据分组从而发送到reduceTask123456789101112131415161718public class ProvincePartitioner ex">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-拯救笔记----Partition之电话号码归属地分类" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      拯救笔记----Partition之电话号码归属地分类
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/14/拯救笔记----Partition之电话号码归属地分类/" class="article-date">
+  <time datetime="2017-12-14T13:05:00.000Z" itemprop="datePublished">2017-12-14</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="需求：接着上一个流量汇总排序的写，把电话号码分类归省"><a href="#需求：接着上一个流量汇总排序的写，把电话号码分类归省" class="headerlink" title="需求：接着上一个流量汇总排序的写，把电话号码分类归省"></a>需求：接着上一个流量汇总排序的写，把电话号码分类归省</h2><h3 id="原理：自定义partition。通过继承partition的类，来重写getPartition方法"><a href="#原理：自定义partition。通过继承partition的类，来重写getPartition方法" class="headerlink" title="原理：自定义partition。通过继承partition的类，来重写getPartition方法"></a>原理：自定义partition。通过继承partition的类，来重写getPartition方法</h3><h3 id="Partition：在map阶段的收集器到缓冲区排序后的一个分区组件，为maptask的数据分组从而发送到reduceTask"><a href="#Partition：在map阶段的收集器到缓冲区排序后的一个分区组件，为maptask的数据分组从而发送到reduceTask" class="headerlink" title="Partition：在map阶段的收集器到缓冲区排序后的一个分区组件，为maptask的数据分组从而发送到reduceTask"></a>Partition：在map阶段的收集器到缓冲区排序后的一个分区组件，为maptask的数据分组从而发送到reduceTask</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">public class ProvincePartitioner extends Partitioner&lt;flowbean,IntWritable&gt;&#123;</div><div class="line">    static HashMap&lt;String,Integer&gt; provinceMap =new HashMap&lt;String,Integer&gt;();</div><div class="line">    static &#123;</div><div class="line">        provinceMap.put(&quot;135&quot;, 0);</div><div class="line">    	provinceMap.put(&quot;136&quot;, 1);</div><div class="line">    	provinceMap.put(&quot;137&quot;, 2);</div><div class="line">    	provinceMap.put(&quot;138&quot;, 3);</div><div class="line">    	provinceMap.put(&quot;139&quot;, 4);</div><div class="line">    &#125;</div><div class="line"> </div><div class="line">	@Override</div><div class="line">	public int getPartition(flowbean k, IntWritable arg1, int arg2) &#123;</div><div class="line">		long str = k.getNum();</div><div class="line">		String numb = String.valueOf(str);</div><div class="line">		Integer res=provinceMap.get(numb.substring(0, 3));</div><div class="line">		return res==null?5:res;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="差不多就这样！就是要通过什么特征分区搞进来，这个getPartition方法也有一个kv对是跟map的k-out和v-out对应的，毕竟是mapTask拉出来的东西嘛"><a href="#差不多就这样！就是要通过什么特征分区搞进来，这个getPartition方法也有一个kv对是跟map的k-out和v-out对应的，毕竟是mapTask拉出来的东西嘛" class="headerlink" title="差不多就这样！就是要通过什么特征分区搞进来，这个getPartition方法也有一个kv对是跟map的k-out和v-out对应的，毕竟是mapTask拉出来的东西嘛"></a>差不多就这样！就是要通过什么特征分区搞进来，这个getPartition方法也有一个kv对是跟map的k-out和v-out对应的，毕竟是mapTask拉出来的东西嘛</h3><h3 id="然后把想要区分的东西拿出来，搞个什么字典啊，数据库啊，做一个特征分析，最后得出一个分区格子。这里弄个HashMap，把对应的手机号分配到对应的几号区"><a href="#然后把想要区分的东西拿出来，搞个什么字典啊，数据库啊，做一个特征分析，最后得出一个分区格子。这里弄个HashMap，把对应的手机号分配到对应的几号区" class="headerlink" title="然后把想要区分的东西拿出来，搞个什么字典啊，数据库啊，做一个特征分析，最后得出一个分区格子。这里弄个HashMap，把对应的手机号分配到对应的几号区"></a>然后把想要区分的东西拿出来，搞个什么字典啊，数据库啊，做一个特征分析，最后得出一个分区格子。这里弄个HashMap，把对应的手机号分配到对应的几号区</h3><h3 id="需要注意的是-一定要考虑不满足条件的那个区，把那个区定到最后！！！！还有设置配置文件时候一定要把这个区多留出来，比如这个分5个区，多一个不和条件区，所以一共分6个区"><a href="#需要注意的是-一定要考虑不满足条件的那个区，把那个区定到最后！！！！还有设置配置文件时候一定要把这个区多留出来，比如这个分5个区，多一个不和条件区，所以一共分6个区" class="headerlink" title="需要注意的是 一定要考虑不满足条件的那个区，把那个区定到最后！！！！还有设置配置文件时候一定要把这个区多留出来，比如这个分5个区，多一个不和条件区，所以一共分6个区"></a>需要注意的是 一定要考虑不满足条件的那个区，把那个区定到最后！！！！还有设置配置文件时候一定要把这个区多留出来，比如这个分5个区，多一个不和条件区，所以一共分6个区</h3><p>像这样</p>
+<pre><code>job.setNumReduceTasks(6);
+job.setPartitionerClass(那个Partition类的类名.class);
+</code></pre>
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/12/13/yarn与mr程序的那些事/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">yarn与mr程序的那些事</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2017 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
