@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>拯救笔记----解决恼人的数据倾斜 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行实例：map里面的join操作要想把文件加载到maptask中！必须知道的四条配置1234      job.addArchiveToClassPath(ar">
+<meta name="keywords" content="MapReduce">
+<meta property="og:type" content="article">
+<meta property="og:title" content="拯救笔记----解决恼人的数据倾斜">
+<meta property="og:url" content="http://yoursite.com/2017/12/15/拯救笔记----解决恼人的数据倾斜/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行实例：map里面的join操作要想把文件加载到maptask中！必须知道的四条配置1234      job.addArchiveToClassPath(ar">
+<meta property="og:updated_time" content="2017-12-15T05:31:54.684Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="拯救笔记----解决恼人的数据倾斜">
+<meta name="twitter:description" content="数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行实例：map里面的join操作要想把文件加载到maptask中！必须知道的四条配置1234      job.addArchiveToClassPath(ar">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-拯救笔记----解决恼人的数据倾斜" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      拯救笔记----解决恼人的数据倾斜
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/15/拯救笔记----解决恼人的数据倾斜/" class="article-date">
+  <time datetime="2017-12-15T00:51:00.000Z" itemprop="datePublished">2017-12-15</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜"><a href="#数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜" class="headerlink" title="数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜"></a>数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜</h2><h3 id="解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行"><a href="#解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行" class="headerlink" title="解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行"></a>解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行</h3><h2 id="实例：map里面的join操作"><a href="#实例：map里面的join操作" class="headerlink" title="实例：map里面的join操作"></a>实例：map里面的join操作</h2><h3 id="要想把文件加载到maptask中！必须知道的四条配置"><a href="#要想把文件加载到maptask中！必须知道的四条配置" class="headerlink" title="要想把文件加载到maptask中！必须知道的四条配置"></a>要想把文件加载到maptask中！必须知道的四条配置</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">      job.addArchiveToClassPath(archive);  缓存jar包到maptask运行节点的classpath中</div><div class="line">	  job.addFileToClassPath(file);        缓存文件到maptask运行节点的classpath中</div><div class="line">   job.addCacheArchive(uri);            缓存压缩包到maptask运行节点的工作目录中</div><div class="line">job.addCacheFile(uri);               缓存普通文件到maptask运行节点的工作目录中</div></pre></td></tr></table></figure>
+<h3 id="配置完这四条之后，就可以开始从mapper类里读它了。"><a href="#配置完这四条之后，就可以开始从mapper类里读它了。" class="headerlink" title="配置完这四条之后，就可以开始从mapper类里读它了。"></a>配置完这四条之后，就可以开始从mapper类里读它了。</h3><h3 id="mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里"><a href="#mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里" class="headerlink" title="mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里"></a>mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">  Map&lt;String, String&gt; infomap = new HashMap&lt;String, String&gt;();</div><div class="line">@Override</div><div class="line">protected void setup(Mapper&lt;LongWritable, Text, Text, NullWritable&gt;.Context context)</div><div class="line">		throws IOException, InterruptedException &#123;</div><div class="line">	BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(&quot;market.txt&quot;)));</div><div class="line">    String line;</div><div class="line">	while(StringUtils.isNotEmpty(line=br.readLine()))</div><div class="line">    &#123;</div><div class="line">    	String[] fields=line.split(&quot;\t&quot;);</div><div class="line">    	String tempinfo = fields[0]+&quot;	&quot;+fields[1];</div><div class="line">    	infomap.put(fields[2],tempinfo); 		    	</div><div class="line">    &#125;</div><div class="line">	br.close();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中-通过StringBuffer来读数据"><a href="#把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中-通过StringBuffer来读数据" class="headerlink" title="把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中(通过StringBuffer来读数据)"></a>把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中(通过StringBuffer来读数据)</h4><h3 id="然后到Map阶段正常切就行，把切出来的共有字段直接map-get出来，拼接输出就行，简单粗暴！"><a href="#然后到Map阶段正常切就行，把切出来的共有字段直接map-get出来，拼接输出就行，简单粗暴！" class="headerlink" title="然后到Map阶段正常切就行，把切出来的共有字段直接map.get出来，拼接输出就行，简单粗暴！"></a>然后到Map阶段正常切就行，把切出来的共有字段直接map.get出来，拼接输出就行，简单粗暴！</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">  protected void map(LongWritable key, Text value, Mapper&lt;LongWritable, Text, Text, NullWritable&gt;.Context context)</div><div class="line">		throws IOException, InterruptedException &#123;</div><div class="line">		Text k = new Text();</div><div class="line">	    String gunline = value.toString();</div><div class="line">	    String[] gun_fields=gunline.split(&quot;\t&quot;);</div><div class="line">	    String info = infomap.get(gun_fields[0]);</div><div class="line">	    k.set(gunline+&quot;	&quot;+info);</div><div class="line">	    context.write(k, NullWritable.get());			  			    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="警醒自己！！！！在所有工作都做完之后一定"><a href="#警醒自己！！！！在所有工作都做完之后一定" class="headerlink" title="警醒自己！！！！在所有工作都做完之后一定"></a>警醒自己！！！！在所有工作都做完之后一定</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">boolean res = job.waitForCompletion(true);</div><div class="line">System.exit(res?0:1);</div></pre></td></tr></table></figure>
+<p>刚才怎么搞都运行不了 就是因为没写这句话！看来job内容不能复制了。越复制越傻，多谢几遍为妙！</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/12/14/拯救笔记----Partition之电话号码归属地分类/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">拯救笔记----Partition之电话号码归属地分类</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2017 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
