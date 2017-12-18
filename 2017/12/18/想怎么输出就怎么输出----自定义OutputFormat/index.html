@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>想怎么输出就怎么输出----自定义OutputFormat | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="自己定义OutputFormat输出，再也不用按照规定输出什么part-1-000000 以及什么一大串看不懂的CRC文件原理分析：当reduce输出时，先调用OutputFormat里面的RecordWriter在writer出去。只要把Outputformat重写了，就能搞定了123456789101112131415161718192021222324252627282930313233pu">
+<meta name="keywords" content="MapReduce">
+<meta property="og:type" content="article">
+<meta property="og:title" content="想怎么输出就怎么输出----自定义OutputFormat">
+<meta property="og:url" content="http://yoursite.com/2017/12/18/想怎么输出就怎么输出----自定义OutputFormat/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="自己定义OutputFormat输出，再也不用按照规定输出什么part-1-000000 以及什么一大串看不懂的CRC文件原理分析：当reduce输出时，先调用OutputFormat里面的RecordWriter在writer出去。只要把Outputformat重写了，就能搞定了123456789101112131415161718192021222324252627282930313233pu">
+<meta property="og:updated_time" content="2017-12-18T06:37:02.603Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="想怎么输出就怎么输出----自定义OutputFormat">
+<meta name="twitter:description" content="自己定义OutputFormat输出，再也不用按照规定输出什么part-1-000000 以及什么一大串看不懂的CRC文件原理分析：当reduce输出时，先调用OutputFormat里面的RecordWriter在writer出去。只要把Outputformat重写了，就能搞定了123456789101112131415161718192021222324252627282930313233pu">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-想怎么输出就怎么输出----自定义OutputFormat" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      想怎么输出就怎么输出----自定义OutputFormat
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/18/想怎么输出就怎么输出----自定义OutputFormat/" class="article-date">
+  <time datetime="2017-12-18T06:13:00.000Z" itemprop="datePublished">2017-12-18</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="自己定义OutputFormat输出，再也不用按照规定输出什么part-1-000000-以及什么一大串看不懂的CRC文件"><a href="#自己定义OutputFormat输出，再也不用按照规定输出什么part-1-000000-以及什么一大串看不懂的CRC文件" class="headerlink" title="自己定义OutputFormat输出，再也不用按照规定输出什么part-1-000000 以及什么一大串看不懂的CRC文件"></a>自己定义OutputFormat输出，再也不用按照规定输出什么part-1-000000 以及什么一大串看不懂的CRC文件</h2><h3 id="原理分析：当reduce输出时，先调用OutputFormat里面的RecordWriter在writer出去。只要把Outputformat重写了，就能搞定了"><a href="#原理分析：当reduce输出时，先调用OutputFormat里面的RecordWriter在writer出去。只要把Outputformat重写了，就能搞定了" class="headerlink" title="原理分析：当reduce输出时，先调用OutputFormat里面的RecordWriter在writer出去。只要把Outputformat重写了，就能搞定了"></a>原理分析：当reduce输出时，先调用OutputFormat里面的RecordWriter在writer出去。只要把Outputformat重写了，就能搞定了</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">public class MyOutput extends FileOutputFormat&lt;Text, Text&gt;&#123;</div><div class="line">    @Override</div><div class="line">	public RecordWriter&lt;Text, Text&gt; getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException &#123;</div><div class="line">		Path path = new Path(&quot;hdfs://192.168.68.200:9000/gy/gyaihh.txt&quot;);</div><div class="line">		FileSystem fs = path.getFileSystem(context.getConfiguration());</div><div class="line">		FSDataOutputStream out = fs.create(path);</div><div class="line">		return new Recordwritter(out);</div><div class="line">	&#125;</div><div class="line">	static class Recordwritter extends RecordWriter&lt;Text, Text&gt;</div><div class="line">	&#123;</div><div class="line">        private FSDataOutputStream fsd;         </div><div class="line">		public Recordwritter(FSDataOutputStream fsd) &#123;</div><div class="line">			this.fsd = fsd;</div><div class="line">		&#125;</div><div class="line"></div><div class="line">		@Override</div><div class="line">		public void close(TaskAttemptContext arg0) throws IOException, InterruptedException &#123;</div><div class="line">		    if(fsd!=null)</div><div class="line">		    &#123;</div><div class="line">		    	fsd.close();</div><div class="line">		    &#125;</div><div class="line">			</div><div class="line">		&#125;</div><div class="line">		@Override</div><div class="line">		public void write(Text arg0, Text arg1) throws IOException, InterruptedException &#123;</div><div class="line">		String line = arg0.toString();</div><div class="line">		String line2 = arg1.toString();</div><div class="line">		fsd.write(line.getBytes());</div><div class="line">		fsd.write(line2.getBytes());			</div><div class="line">		&#125;</div><div class="line">		</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>写一个类继承了FileOutputFormat，kv泛型就是最终结果输出泛型。这里让文件输出到HDFS的自建文件夹，自建文件下</p>
+<p>先在FileOutputFormat的子类里把文件输出流路径传给RecordWriter里，然后再传一个对象给Recordwrite的子类，再通过里面的write方法输出，然后关流。</p>
+<p>以上解决后就可以把这个类写在程序中的main方法里了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">job.setOutputFormatClass(MyOutput.class);</div></pre></td></tr></table></figure></p>
+<p>对于 FileOutputFormat.setOutputPath(job, new Path(args[1]));还是要写的，除了要输出文件外还需要输出success文件等其他在这个定义的目录里。</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/12/17/知道mr程序输入的文件名以及我急中生智使用StringBuffer----利用mr程序实现的Join操作和索引文件的生成/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">知道mr程序输入的文件名以及我急中生智使用StringBuffer----利用mr程序实现的Join操作和索引文件的生成</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2017 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
