@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>一次成之安装Hbase | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="tar -zxvf hbase.tar.gz 解压后 进入conf修改Hbase-env.sh123456789export JAVA_HOME=/usr/JAVA/jdk1.8.0_121JAVA的路径，按照/etc/profile里面来就行export JAVA_CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jarJAVA的环境变">
+<meta name="keywords" content="Hbase">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一次成之安装Hbase">
+<meta property="og:url" content="http://yoursite.com/2017/12/21/一次成之安装Hbase/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="tar -zxvf hbase.tar.gz 解压后 进入conf修改Hbase-env.sh123456789export JAVA_HOME=/usr/JAVA/jdk1.8.0_121JAVA的路径，按照/etc/profile里面来就行export JAVA_CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jarJAVA的环境变">
+<meta property="og:updated_time" content="2017-12-21T02:13:56.828Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一次成之安装Hbase">
+<meta name="twitter:description" content="tar -zxvf hbase.tar.gz 解压后 进入conf修改Hbase-env.sh123456789export JAVA_HOME=/usr/JAVA/jdk1.8.0_121JAVA的路径，按照/etc/profile里面来就行export JAVA_CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jarJAVA的环境变">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-一次成之安装Hbase" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      一次成之安装Hbase
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/21/一次成之安装Hbase/" class="article-date">
+  <time datetime="2017-12-21T01:49:00.000Z" itemprop="datePublished">2017-12-21</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="tar-zxvf-hbase-tar-gz-解压后-进入conf"><a href="#tar-zxvf-hbase-tar-gz-解压后-进入conf" class="headerlink" title="tar -zxvf hbase.tar.gz 解压后 进入conf"></a>tar -zxvf hbase.tar.gz 解压后 进入conf</h2><h3 id="修改Hbase-env-sh"><a href="#修改Hbase-env-sh" class="headerlink" title="修改Hbase-env.sh"></a>修改Hbase-env.sh</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">export JAVA_HOME=/usr/JAVA/jdk1.8.0_121</div><div class="line">JAVA的路径，按照/etc/profile里面来就行</div><div class="line"></div><div class="line">export JAVA_CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar</div><div class="line">JAVA的环境变量</div><div class="line"></div><div class="line">export HBASE_MANAGES_ZK=false</div><div class="line">这个参数为true时，Hbase会用自己内置的单机版zookeeper</div><div class="line">为false时，会用用户的zookeeper。</div></pre></td></tr></table></figure>
+<h3 id="修改Hbase-site-xml"><a href="#修改Hbase-site-xml" class="headerlink" title="修改Hbase-site.xml"></a>修改Hbase-site.xml</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.master&lt;/name&gt;</div><div class="line">&lt;value&gt;haihan:60010&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">master的位置</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.master.maxclockskew&lt;/name&gt;</div><div class="line">&lt;value&gt;180000&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">主和从检查心跳的间隔时间</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.rootdir&lt;/name&gt;</div><div class="line">&lt;value&gt;hdfs://haihan:9000/hbase&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">hbase在hdfs的目录位置</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.cluster.distributed&lt;/name&gt;</div><div class="line">&lt;value&gt;true&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">是否为集群</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.zookeeper.quorum&lt;/name&gt;</div><div class="line">&lt;value&gt;haihan：2181,gy：2181,clone_gy：2181&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">zookeeper的机器名</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.zookeeper.property.dataDir&lt;/name&gt;</div><div class="line">&lt;value&gt;/home/ghadoop/apps/hbase/tmp/zookeeper&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">临时数据文件位置</div></pre></td></tr></table></figure>
+<p>然后进入bin/start-Hbase.sh开就行了<br>关就是stop-hbase.sh</p>
+<h3 id="启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010-如果都不好使就netstat-nltp看看"><a href="#启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010-如果都不好使就netstat-nltp看看" class="headerlink" title="启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010 如果都不好使就netstat -nltp看看"></a>启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010 如果都不好使就netstat -nltp看看</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/12/21/Hbase的理解要点/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Hbase的理解要点
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/12/18/想怎么输出就怎么输出----自定义OutputFormat/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">想怎么输出就怎么输出----自定义OutputFormat</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2017 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

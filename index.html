@@ -28,6 +28,133 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-zookeeper的个人理解和傻瓜式安装" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/21/zookeeper的个人理解和傻瓜式安装/">zookeeper的个人理解和傻瓜式安装</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/21/zookeeper的个人理解和傻瓜式安装/" class="article-date">
+  <time datetime="2017-12-21T02:34:00.000Z" itemprop="datePublished">2017-12-21</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="啥是zookeeper"><a href="#啥是zookeeper" class="headerlink" title="啥是zookeeper"></a>啥是zookeeper</h1><h2 id="zookeeper是一个集群分布式协调软件"><a href="#zookeeper是一个集群分布式协调软件" class="headerlink" title="zookeeper是一个集群分布式协调软件."></a>zookeeper是一个集群分布式协调软件.</h2><h3 id="zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性"><a href="#zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性" class="headerlink" title="zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性."></a>zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性.</h3><h1 id="为啥会有zookeeper"><a href="#为啥会有zookeeper" class="headerlink" title="为啥会有zookeeper"></a>为啥会有zookeeper</h1><p>假设有三个应用，这三个应用共用一份配置信息。</p>
+<p>没有zookeeper的情况下，把配置信息放在一个服务器上,<br>并设定一把锁，在每次读写时只能一个应用来读写,<br>当这个服务器宕机时候，还需要另一个服务器做备用.</p>
+<p>这时，这几台服务器的数据同步问题，锁的问题，以及其他问题。都很难解决。<br>zookeeper就是解决这些麻烦的问题。</p>
+<p>当有zookeeper时，把这几个服务器<br>装上zookeeper!并把配置文件放在zookeeper里面就可以了</p>
+<h1 id="zookeeper的集群角色"><a href="#zookeeper的集群角色" class="headerlink" title="zookeeper的集群角色"></a>zookeeper的集群角色</h1><p>Leader（主节点）与Follower（从节点）<br>Leader控制写的操作，超过一半的节点更新成功，就确认更新成功。<br>在启动时候没有Leader与Follower的角色。通过选举来确定Leader</p>
+<h1 id="傻瓜式安装zookeeper"><a href="#傻瓜式安装zookeeper" class="headerlink" title="傻瓜式安装zookeeper"></a>傻瓜式安装zookeeper</h1><p>zookeeper搭建：<br>一个节点也可以 1、3、5、7</p>
+<h3 id="第一步修改zoo-cfg："><a href="#第一步修改zoo-cfg：" class="headerlink" title="第一步修改zoo.cfg："></a>第一步修改zoo.cfg：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">dataDir=&#123;zookeeper本地节点的工作目录&#125;</div><div class="line">dataLogDir=&#123;日志文件目录&#125;</div><div class="line">clientPort=2181 端口</div><div class="line">server.1=haihan:2888:3888</div><div class="line">server.2=gy:2888:3888</div><div class="line">server.3=clone_gy:2888:3888</div><div class="line">tickTime=&#123;心跳感知的间隔时间,一般默认为2000&#125;</div><div class="line">initLimit=&#123;两个节点超过的心跳感应次数 默认10&#125;</div><div class="line">syncLimit=&#123;Follower对Leader发送相应超过数，超过了这个就认为失联 默认为5&#125;</div></pre></td></tr></table></figure>
+<h3 id="第二步"><a href="#第二步" class="headerlink" title="第二步"></a>第二步</h3><p>在dataDir下建立工作文件夹data并在里面新建一个myid文件，内容为1</p>
+<p>依次类推。第二台为2</p>
+<p>myid必须与zoo.cfg中最后三行对应</p>
+<h2 id="启动zookeeper"><a href="#启动zookeeper" class="headerlink" title="启动zookeeper"></a>启动zookeeper</h2><p>bin下<br>./zkserver.sh start<br>几台机器依次启动</p>
+<p>进程名为 QuorumPeerMain</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-Hbase的理解要点" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/21/Hbase的理解要点/">Hbase的理解要点</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/21/Hbase的理解要点/" class="article-date">
+  <time datetime="2017-12-21T02:14:00.000Z" itemprop="datePublished">2017-12-21</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Hbase：-Hadoop-database-的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据"><a href="#Hbase：-Hadoop-database-的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据" class="headerlink" title="Hbase： Hadoop database 的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据"></a>Hbase： Hadoop database 的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据</h2><h3 id="与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。"><a href="#与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。" class="headerlink" title="与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。"></a>与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。</h3><h3 id="hbase也是基于hdfs存储的。它集群中的角色是："><a href="#hbase也是基于hdfs存储的。它集群中的角色是：" class="headerlink" title="hbase也是基于hdfs存储的。它集群中的角色是："></a>hbase也是基于hdfs存储的。它集群中的角色是：</h3><h4 id="主：HMaster-从：HRegionnserver"><a href="#主：HMaster-从：HRegionnserver" class="headerlink" title="主：HMaster 从：HRegionnserver"></a>主：HMaster 从：HRegionnserver</h4><p>HMaster不存任何数据，只负责感知管理regionserver。<br>和负载均衡当集群启动，表创建完毕 HMaster挂了也没事</p>
+<h2 id="Hbase的表结构："><a href="#Hbase的表结构：" class="headerlink" title="Hbase的表结构："></a>Hbase的表结构：</h2><h3 id="建表时不需要限定表中的字段，只需要指定若干列族！"><a href="#建表时不需要限定表中的字段，只需要指定若干列族！" class="headerlink" title="建表时不需要限定表中的字段，只需要指定若干列族！"></a>建表时不需要限定表中的字段，只需要指定若干列族！</h3><p>插入数据时，列族中可以存储任意多个列！(列名(key)，值(value))<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">例（baseinfo基本信息、extrainfo其他信息）</div><div class="line">插入时，先插入行键0001 (行键是唯一的)再插入baseinfo</div><div class="line">在baseinfo中插入类似key、value的结构&lt;name：gaoyuan&gt;&lt;age:18&gt;&lt;career:student&gt;</div><div class="line">再插入记录时，可以和上一行的不一样。&lt;name：chaoren&gt;&lt;age:28&gt;&lt;xueli:benke&gt;&lt;jiguan:bj&gt;</div></pre></td></tr></table></figure></p>
+<h3 id="一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳"><a href="#一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳" class="headerlink" title="一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳"></a>一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳</h3><p>要查询一个具体字段的值，就需要指定坐标：表名—行键—-列族（ColumnFamliy）：列名（Qualifier）—版本</p>
+<h2 id="Hbase的存储机制："><a href="#Hbase的存储机制：" class="headerlink" title="Hbase的存储机制："></a>Hbase的存储机制：</h2><h4 id="把表切开存放，把某一个列族（store）下面的若干行切出region"><a href="#把表切开存放，把某一个列族（store）下面的若干行切出region" class="headerlink" title="把表切开存放，把某一个列族（store）下面的若干行切出region"></a>把表切开存放，把某一个列族（store）下面的若干行切出region</h4><h4 id="region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中"><a href="#region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中" class="headerlink" title="region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中"></a>region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中</h4><h4 id="切分成region-table-1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行"><a href="#切分成region-table-1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行" class="headerlink" title="切分成region_table_1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行"></a>切分成region_table_1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行</h4><h4 id="可以减少很多网络传输问题"><a href="#可以减少很多网络传输问题" class="headerlink" title="可以减少很多网络传输问题"></a>可以减少很多网络传输问题</h4><h2 id="Hbase的寻址机制："><a href="#Hbase的寻址机制：" class="headerlink" title="Hbase的寻址机制："></a>Hbase的寻址机制：</h2><h4 id="Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键"><a href="#Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键" class="headerlink" title="Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键"></a>Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键</h4><p>内容为region文件在哪个机器上的ip地址.<br>一个region就在这个系统表中产生记录.</p>
+<p>这个表的体积大到一定程度也需要再分.<br>再分出的信息还需要一个表（ROOT表）来存储它的行键范围和文件地址数据</p>
+<p>ROOT表也在某一个regionserver中，具体位置应该在zookeeper上查<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">例如：要查行键的10001 现在zookeeper上查找root表的位置，找到root表中的某一行</div><div class="line">再找到meta表中的一行，最后找到用户表中的region文件地址，再找到对应行键的记录</div></pre></td></tr></table></figure></p>
+<p>一个用户的数据表会被切分成很多region，然后分别存在很多不同的regionserver上再存在HDFS上<br>manstore 是一个存储访问量多的数据</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-一次成之安装Hbase" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/21/一次成之安装Hbase/">一次成之安装Hbase</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/21/一次成之安装Hbase/" class="article-date">
+  <time datetime="2017-12-21T01:49:00.000Z" itemprop="datePublished">2017-12-21</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="tar-zxvf-hbase-tar-gz-解压后-进入conf"><a href="#tar-zxvf-hbase-tar-gz-解压后-进入conf" class="headerlink" title="tar -zxvf hbase.tar.gz 解压后 进入conf"></a>tar -zxvf hbase.tar.gz 解压后 进入conf</h2><h3 id="修改Hbase-env-sh"><a href="#修改Hbase-env-sh" class="headerlink" title="修改Hbase-env.sh"></a>修改Hbase-env.sh</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">export JAVA_HOME=/usr/JAVA/jdk1.8.0_121</div><div class="line">JAVA的路径，按照/etc/profile里面来就行</div><div class="line"></div><div class="line">export JAVA_CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar</div><div class="line">JAVA的环境变量</div><div class="line"></div><div class="line">export HBASE_MANAGES_ZK=false</div><div class="line">这个参数为true时，Hbase会用自己内置的单机版zookeeper</div><div class="line">为false时，会用用户的zookeeper。</div></pre></td></tr></table></figure>
+<h3 id="修改Hbase-site-xml"><a href="#修改Hbase-site-xml" class="headerlink" title="修改Hbase-site.xml"></a>修改Hbase-site.xml</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.master&lt;/name&gt;</div><div class="line">&lt;value&gt;haihan:60010&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">master的位置</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.master.maxclockskew&lt;/name&gt;</div><div class="line">&lt;value&gt;180000&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">主和从检查心跳的间隔时间</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.rootdir&lt;/name&gt;</div><div class="line">&lt;value&gt;hdfs://haihan:9000/hbase&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">hbase在hdfs的目录位置</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.cluster.distributed&lt;/name&gt;</div><div class="line">&lt;value&gt;true&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">是否为集群</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.zookeeper.quorum&lt;/name&gt;</div><div class="line">&lt;value&gt;haihan：2181,gy：2181,clone_gy：2181&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">zookeeper的机器名</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.zookeeper.property.dataDir&lt;/name&gt;</div><div class="line">&lt;value&gt;/home/ghadoop/apps/hbase/tmp/zookeeper&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">临时数据文件位置</div></pre></td></tr></table></figure>
+<p>然后进入bin/start-Hbase.sh开就行了<br>关就是stop-hbase.sh</p>
+<h3 id="启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010-如果都不好使就netstat-nltp看看"><a href="#启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010-如果都不好使就netstat-nltp看看" class="headerlink" title="启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010 如果都不好使就netstat -nltp看看"></a>启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010 如果都不好使就netstat -nltp看看</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-想怎么输出就怎么输出----自定义OutputFormat" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -380,134 +507,6 @@ job.setPartitionerClass(那个Partition类的类名.class);
 <h3 id="GroupingComparor（k，next-k）"><a href="#GroupingComparor（k，next-k）" class="headerlink" title="GroupingComparor（k，next k）"></a>GroupingComparor（k，next k）</h3><p>方法来判断谁和谁相同，可以自己定义文件中的k相同,传入k和v的迭代器，把所有相同的k合并成一个k，这个k带一组v<br>然后context.write()</p>
 <h3 id="mr程序运行第五步："><a href="#mr程序运行第五步：" class="headerlink" title="mr程序运行第五步："></a>mr程序运行第五步：</h3><p>reduceTask调用OutputFormat中的TextOutputFormat，RecordWriter write（k，v）写到HDFS中，名字为part-1-000000</p>
 <h2 id="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"><a href="#shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！" class="headerlink" title="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"></a>shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！</h2><p>听着很屌其实就是那么一回事</p>
-
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-拯救笔记----流量汇总排序mr程序" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/12/11/拯救笔记----流量汇总排序mr程序/">拯救笔记----流量汇总排序mr程序</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/12/11/拯救笔记----流量汇总排序mr程序/" class="article-date">
-  <time datetime="2017-12-11T03:45:00.000Z" itemprop="datePublished">2017-12-11</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="需求：对一段网络流量日志进行清洗，然后排序输出"><a href="#需求：对一段网络流量日志进行清洗，然后排序输出" class="headerlink" title="需求：对一段网络流量日志进行清洗，然后排序输出"></a>需求：对一段网络流量日志进行清洗，然后排序输出</h2><h3 id="map阶段"><a href="#map阶段" class="headerlink" title="map阶段"></a>map阶段</h3><pre><code>String line = value.toString();
-String[] fields = line.split(&quot;\t&quot;);
-long num =Long.parseLong(fields[1]);
-long up = Long.parseLong(fields[fields.length-1]);
-long down = Long.parseLong(fields[fields.length-2]);
-IntWritable V = new IntWritable(1);
-flowbean K = new flowbean(up, down,num);
-context.write(K,V);
-</code></pre><h3 id="超级垃圾无脑版本代码-就是切切切-然后构造一个bean"><a href="#超级垃圾无脑版本代码-就是切切切-然后构造一个bean" class="headerlink" title="超级垃圾无脑版本代码 就是切切切 然后构造一个bean"></a>超级垃圾无脑版本代码 就是切切切 然后构造一个bean</h3><h3 id="把上传流量和下载流量还有手机号传进去"><a href="#把上传流量和下载流量还有手机号传进去" class="headerlink" title="把上传流量和下载流量还有手机号传进去"></a>把上传流量和下载流量还有手机号传进去</h3><h3 id="实验了几次，发现map阶段不能传空值！new了一个-IntWritable-过去。"><a href="#实验了几次，发现map阶段不能传空值！new了一个-IntWritable-过去。" class="headerlink" title="实验了几次，发现map阶段不能传空值！new了一个 IntWritable 过去。"></a>实验了几次，发现map阶段不能传空值！new了一个 IntWritable 过去。</h3><h3 id="为了防止new的IntWritable对象太多，就传一个了。"><a href="#为了防止new的IntWritable对象太多，就传一个了。" class="headerlink" title="为了防止new的IntWritable对象太多，就传一个了。"></a>为了防止new的IntWritable对象太多，就传一个了。</h3><h4 id="内部过程"><a href="#内部过程" class="headerlink" title="内部过程"></a>内部过程</h4><p>flowbean,1</p>
-<p>flowbean,1</p>
-<p>flowbean,1</p>
-<p>flowbean,1<br>每个flowbean对象都不等，不用担心到reduce阶段合并的问题。</p>
-<h3 id="对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。"><a href="#对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。" class="headerlink" title="对于排序 在flowbean类中实现WritableComparable接口 然后重写compareTo方法，在compareTo里面写排序逻辑。"></a>对于排序 在flowbean类中实现WritableComparable<t>接口 然后重写compareTo方法，在compareTo里面写排序逻辑。</t></h3><h3 id="reduce阶段"><a href="#reduce阶段" class="headerlink" title="reduce阶段"></a>reduce阶段</h3><h4 id="直接无脑输出！"><a href="#直接无脑输出！" class="headerlink" title="直接无脑输出！"></a>直接无脑输出！</h4><pre><code>context.write(key, null);
-</code></pre><h4 id="这次可以用空值搞定了！"><a href="#这次可以用空值搞定了！" class="headerlink" title="这次可以用空值搞定了！"></a>这次可以用空值搞定了！</h4><h2 id="出现的麻烦"><a href="#出现的麻烦" class="headerlink" title="出现的麻烦"></a>出现的麻烦</h2><h3 id="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"><a href="#每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番" class="headerlink" title="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"></a>每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番</h3><h3 id="最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！"><a href="#最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！" class="headerlink" title="最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！"></a>最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！</h3><h3 id="Ps：write和readFields-这俩方法中的变量必须按顺序写！"><a href="#Ps：write和readFields-这俩方法中的变量必须按顺序写！" class="headerlink" title="Ps：write和readFields 这俩方法中的变量必须按顺序写！"></a>Ps：write和readFields 这俩方法中的变量必须按顺序写！</h3>
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-Linux安装hadoop前的配置" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/09/25/Linux安装hadoop前的配置/">Linux安装hadoop前的配置</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/09/25/Linux安装hadoop前的配置/" class="article-date">
-  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="基本几步搞定linux配置"><a href="#基本几步搞定linux配置" class="headerlink" title="基本几步搞定linux配置"></a>基本几步搞定linux配置</h1><h2 id="自己看视频总结的。。"><a href="#自己看视频总结的。。" class="headerlink" title="自己看视频总结的。。"></a>自己看视频总结的。。</h2><p>在centos用minimal安装成功后..先干这几步</p>
-<h2 id="1-修改网卡的基本配置"><a href="#1-修改网卡的基本配置" class="headerlink" title="1. 修改网卡的基本配置"></a>1. 修改网卡的基本配置</h2><h3 id="vi-etc-sysconfig-network-scripts-ifcfg-etho"><a href="#vi-etc-sysconfig-network-scripts-ifcfg-etho" class="headerlink" title="vi /etc/sysconfig/network-scripts/ifcfg-etho"></a>vi /etc/sysconfig/network-scripts/ifcfg-etho</h3><p>DEVICE=eth0 （网卡的物理位置）<br>ONBOOT=yes（默认加载项）<br>BOOTPROTO=static（设置成静态网卡）<br>IPADDR=设置的ip地址（不用解释了吧）</p>
-<h2 id="2-修改网卡的全局配置"><a href="#2-修改网卡的全局配置" class="headerlink" title="2. 修改网卡的全局配置"></a>2. 修改网卡的全局配置</h2><h3 id="vi-etc-sysconfig-network"><a href="#vi-etc-sysconfig-network" class="headerlink" title="vi /etc/sysconfig/network"></a>vi /etc/sysconfig/network</h3><p>NETWORKING=yes<br>HOSTNAME=主机名（全局主机名，用于区分集群的机器，以及配置hosts）<br>GATEWAY=网关（网关地址，如果是虚拟机就看虚拟网络配置中的网关）</p>
-<h2 id="3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"><a href="#3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）" class="headerlink" title="3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"></a>3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）</h2><h3 id="vi-etc-udev-rules-d-70-persistent-net-rules"><a href="#vi-etc-udev-rules-d-70-persistent-net-rules" class="headerlink" title="vi /etc/udev/rules.d/70-persistent-net.rules"></a>vi /etc/udev/rules.d/70-persistent-net.rules</h3><p>删除原eth0，把eth1改成eth0</p>
-<h2 id="4-修改hosts文件（重要的一匹！！！！）"><a href="#4-修改hosts文件（重要的一匹！！！！）" class="headerlink" title="4. 修改hosts文件（重要的一匹！！！！）"></a>4. 修改hosts文件（重要的一匹！！！！）</h2><h3 id="vi-etc-hosts"><a href="#vi-etc-hosts" class="headerlink" title="vi /etc/hosts"></a>vi /etc/hosts</h3><p>格式： IP地址  域名</p>
-<h2 id="5-（补充）当域名ping不通外网时候的解决办法"><a href="#5-（补充）当域名ping不通外网时候的解决办法" class="headerlink" title="5.（补充）当域名ping不通外网时候的解决办法"></a>5.（补充）当域名ping不通外网时候的解决办法</h2><h3 id="vi-etc-resolv-conf"><a href="#vi-etc-resolv-conf" class="headerlink" title="vi /etc/resolv.conf"></a>vi /etc/resolv.conf</h3><p>   设置DNS服务器<br>   nameserver 8.8.8.8<br>   nameserver 8.8.4.4</p>
-<h2 id="6-给hadoop新建一个专属用户"><a href="#6-给hadoop新建一个专属用户" class="headerlink" title="6.给hadoop新建一个专属用户"></a>6.给hadoop新建一个专属用户</h2><h3 id="useradd-用户名-passwd-密码"><a href="#useradd-用户名-passwd-密码" class="headerlink" title="useradd 用户名 passwd 密码"></a>useradd 用户名 passwd 密码</h3><h2 id="7-简单两步配置ssh免密登陆"><a href="#7-简单两步配置ssh免密登陆" class="headerlink" title="7.简单两步配置ssh免密登陆"></a>7.简单两步配置ssh免密登陆</h2><h3 id="ssh-keygen（三下回车）"><a href="#ssh-keygen（三下回车）" class="headerlink" title="ssh-keygen（三下回车）"></a>ssh-keygen（三下回车）</h3><h3 id="ssh-copy-id-主机名（输入密码）"><a href="#ssh-copy-id-主机名（输入密码）" class="headerlink" title="ssh-copy-id 主机名（输入密码）"></a>ssh-copy-id 主机名（输入密码）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">接下来就可以感受hadoop了</div></pre></td></tr></table></figure>
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-关于JAVA的一些小记" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/09/25/关于JAVA的一些小记/">关于JAVA的一些小记</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/09/25/关于JAVA的一些小记/" class="article-date">
-  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="1-线程调用-run-和-start-的-区别"><a href="#1-线程调用-run-和-start-的-区别" class="headerlink" title="1.线程调用 run 和 start 的 区别"></a>1.线程调用 run 和 start 的 区别</h2><p>调用run方法，其本质就是一个普通方法的调用，不会开启新的线程。</p>
-<p>调用start方法，才会开启一个线程来执行run里面的方法</p>
-<h2 id="2-使用Thread和Runnable的区别"><a href="#2-使用Thread和Runnable的区别" class="headerlink" title="2.使用Thread和Runnable的区别"></a>2.使用Thread和Runnable的区别</h2><p>Thread：先继承Thread，然后通过new来实现类</p>
-<p>Runnable：先继承Runnable，然后new Thread(new 实现类的对象,线程名)</p>
 
       
 
