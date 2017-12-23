@@ -28,6 +28,90 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-关于MapReduce的所有个人理解" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/11/关于MapReduce的所有个人理解/">关于MapReduce的所有个人理解</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/11/关于MapReduce的所有个人理解/" class="article-date">
+  <time datetime="2017-12-11T10:14:00.000Z" itemprop="datePublished">2017-12-11</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"><a href="#MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。" class="headerlink" title="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"></a>MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。</h1><h3 id="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"><a href="#mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）" class="headerlink" title="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"></a>mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）</h3><h3 id="运行mr程序有三个进程"><a href="#运行mr程序有三个进程" class="headerlink" title="运行mr程序有三个进程"></a>运行mr程序有三个进程</h3><ol>
+<li>MRAppMaster：负责整个程序的过程调度及状态协调</li>
+<li>mapTask：负责map阶段的数据处理流程</li>
+<li>ReduceTask：负责reduce阶段的数据处理流程</li>
+</ol>
+<h2 id="mr程序运行第一步：文件切片"><a href="#mr程序运行第一步：文件切片" class="headerlink" title="mr程序运行第一步：文件切片"></a>mr程序运行第一步：文件切片</h2><p>文件的切片是由FileInputFormat实现类的getSplits()方法完成，先读取目录，然后遍历所有文件，获取文件大小fs.sizeOf(文件名),计算切片大小<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">computerSplitSize(Math.max(minSize.Math.max(maxSize.blocksize))=blocksize=128M</div></pre></td></tr></table></figure></p>
+<p>blocksize 默认128M，hdfs一个文件的大小，mr程序为了防止不必要的网络传输问题，默认设置为和hdfs中的文件切片一样大</p>
+<p>比如：</p>
+<blockquote>
+<p>有两个文件 gy.txt 大小为 200M haihan.txt 大小为8M </p>
+</blockquote>
+<p>切片后为</p>
+<blockquote>
+<p>gy.txt.split1 0~128M  gy.txt.split2 128M~200M haihan.txt.split 0~8M</p>
+</blockquote>
+<p>由此可见，小文件越多效率越低，注意上传文件时的合并或写一个小mr文件来合并、或者用Inputformat中的CombineInputFormat。</p>
+<p>如果文件太大了，就把hdfs上的切片blocksize变大</p>
+<blockquote>
+<h4 id="设置reduce运行个数"><a href="#设置reduce运行个数" class="headerlink" title="设置reduce运行个数"></a>设置reduce运行个数</h4><p>job.setNumReduceTasks(4);</p>
+</blockquote>
+<p>如设置的数据分布不均匀，就有可能在reduce阶段产生数据倾斜（好多数据都跑一个reducetask里面了）<br>注意： reducetask数量并不是任意设置，还要考虑业务逻辑需求，有些情况下，需要计算全局汇总结果，就只能有1个reducetask</p>
+<blockquote>
+<p>尽量不要运行太多的reduce task。对大多数job来说，最好rduce的个数最多和集群中的reduce持平，或者比集群的 reduce slots小。这个对于小集群而言，尤其重要。</p>
+</blockquote>
+<p>运行后的maptask调用Inputformat （这货是个抽象类有好多实现 mr程序主要用 FileInputformat下的TextInputFormat（文本文件）和SequenceFileInpitFormat(））InputFormat调用RecordReader来读文件切切切，读好后传给map方法。</p>
+<h2 id="mr程序运行第二步："><a href="#mr程序运行第二步：" class="headerlink" title="mr程序运行第二步："></a>mr程序运行第二步：</h2><p>调用map方法拿到kv对，运行map逻辑后（map逻辑是由自己瞎写的跟人家框架没关系），通过context.write写出到内部组件OutPutCollector（收集器~框架给的咱们动不了）</p>
+<h2 id="mr程序运行第三步："><a href="#mr程序运行第三步：" class="headerlink" title="mr程序运行第三步："></a>mr程序运行第三步：</h2><p>OutPutCollector把自己瞎写的逻辑以及自己定义的输出 输出到一个环形缓冲区（这个内存一共默认100M，学名环形缓冲区内存，就是个环形数组队列！但只能写80%）<br>spiller这个东西负责把缓冲区分区并把数据排序并溢出到文件到内存中，排序用内存就是用剩下那个20%。</p>
+<p>spiller这个分区就是Partitoner 默认为HashPartitioner （HashCode Mod 2）</p>
+<p>排序则是快速排序KeycomparorTo，这里所有的排序都是以key来排序</p>
+<p>比如：</p>
+<blockquote>
+<p>排序前：a1，c1，b1，a1，b1 排序后：（a1，a1，c1）（b1，b1）</p>
+</blockquote>
+<p>然后从内存写出来写到文件中（溢出一次写一次，产生一个文件，可能为多个文件）文件就在maptask工作目录里面，溢出的结果都是分区且区内有序的。<br>当最后一次溢出完，把剩下的没满的一次溢出。溢出后marge（归并）成一个大文件。</p>
+<h3 id="效率提高大法：conbiner组件（预先reduce）"><a href="#效率提高大法：conbiner组件（预先reduce）" class="headerlink" title="效率提高大法：conbiner组件（预先reduce）"></a>效率提高大法：conbiner组件（预先reduce）</h3><p>为了防止在溢出reduce时过慢，conbiner组件可以在mapTask本地时将文件进行reduce 以及在合并文件后进行reduce<br>这个可以自定义！！！！！！</p>
+<h2 id="mr程序运行第四步："><a href="#mr程序运行第四步：" class="headerlink" title="mr程序运行第四步："></a>mr程序运行第四步：</h2><p>说明：reduceTask的数量与spiller分的区没有直接关系，reduceTask的数量由我自己定的或框架默认。当然要想办法让它们对应起来</p>
+<p>比如：</p>
+<blockquote>
+<p>key.hashCode % numreduce</p>
+</blockquote>
+<p>reduceTask下载mapTask归并的文件到reduceTask的机器本地磁盘目录，然后再次合并</p>
+<p>比如：</p>
+<blockquote>
+<p>a1，a1，c1，b1，b1</p>
+</blockquote>
+<p>此时reducer中的reduce方法调用</p>
+<h3 id="GroupingComparor（k，next-k）"><a href="#GroupingComparor（k，next-k）" class="headerlink" title="GroupingComparor（k，next k）"></a>GroupingComparor（k，next k）</h3><p>方法来判断谁和谁相同，可以自己定义文件中的k相同,传入k和v的迭代器，把所有相同的k合并成一个k，这个k带一组v<br>然后context.write()</p>
+<h3 id="mr程序运行第五步："><a href="#mr程序运行第五步：" class="headerlink" title="mr程序运行第五步："></a>mr程序运行第五步：</h3><p>reduceTask调用OutputFormat中的TextOutputFormat，RecordWriter write（k，v）写到HDFS中，名字为part-1-000000</p>
+<h2 id="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"><a href="#shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！" class="headerlink" title="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"></a>shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！</h2><p>听着很屌其实就是那么一回事</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-拯救笔记----流量汇总排序mr程序" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -64,6 +148,47 @@ context.write(K,V);
 <p>flowbean,1<br>每个flowbean对象都不等，不用担心到reduce阶段合并的问题。</p>
 <h3 id="对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。"><a href="#对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。" class="headerlink" title="对于排序 在flowbean类中实现WritableComparable接口 然后重写compareTo方法，在compareTo里面写排序逻辑。"></a>对于排序 在flowbean类中实现WritableComparable<t>接口 然后重写compareTo方法，在compareTo里面写排序逻辑。</t></h3><h3 id="reduce阶段"><a href="#reduce阶段" class="headerlink" title="reduce阶段"></a>reduce阶段</h3><h4 id="直接无脑输出！"><a href="#直接无脑输出！" class="headerlink" title="直接无脑输出！"></a>直接无脑输出！</h4><pre><code>context.write(key, null);
 </code></pre><h4 id="这次可以用空值搞定了！"><a href="#这次可以用空值搞定了！" class="headerlink" title="这次可以用空值搞定了！"></a>这次可以用空值搞定了！</h4><h2 id="出现的麻烦"><a href="#出现的麻烦" class="headerlink" title="出现的麻烦"></a>出现的麻烦</h2><h3 id="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"><a href="#每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番" class="headerlink" title="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"></a>每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番</h3><h3 id="最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！"><a href="#最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！" class="headerlink" title="最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！"></a>最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！</h3><h3 id="Ps：write和readFields-这俩方法中的变量必须按顺序写！"><a href="#Ps：write和readFields-这俩方法中的变量必须按顺序写！" class="headerlink" title="Ps：write和readFields 这俩方法中的变量必须按顺序写！"></a>Ps：write和readFields 这俩方法中的变量必须按顺序写！</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-Linux安装hadoop前的配置" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/09/25/Linux安装hadoop前的配置/">Linux安装hadoop前的配置</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/09/25/Linux安装hadoop前的配置/" class="article-date">
+  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="基本几步搞定linux配置"><a href="#基本几步搞定linux配置" class="headerlink" title="基本几步搞定linux配置"></a>基本几步搞定linux配置</h1><h2 id="自己看视频总结的。。"><a href="#自己看视频总结的。。" class="headerlink" title="自己看视频总结的。。"></a>自己看视频总结的。。</h2><p>在centos用minimal安装成功后..先干这几步</p>
+<h2 id="1-修改网卡的基本配置"><a href="#1-修改网卡的基本配置" class="headerlink" title="1. 修改网卡的基本配置"></a>1. 修改网卡的基本配置</h2><h3 id="vi-etc-sysconfig-network-scripts-ifcfg-etho"><a href="#vi-etc-sysconfig-network-scripts-ifcfg-etho" class="headerlink" title="vi /etc/sysconfig/network-scripts/ifcfg-etho"></a>vi /etc/sysconfig/network-scripts/ifcfg-etho</h3><p>DEVICE=eth0 （网卡的物理位置）<br>ONBOOT=yes（默认加载项）<br>BOOTPROTO=static（设置成静态网卡）<br>IPADDR=设置的ip地址（不用解释了吧）</p>
+<h2 id="2-修改网卡的全局配置"><a href="#2-修改网卡的全局配置" class="headerlink" title="2. 修改网卡的全局配置"></a>2. 修改网卡的全局配置</h2><h3 id="vi-etc-sysconfig-network"><a href="#vi-etc-sysconfig-network" class="headerlink" title="vi /etc/sysconfig/network"></a>vi /etc/sysconfig/network</h3><p>NETWORKING=yes<br>HOSTNAME=主机名（全局主机名，用于区分集群的机器，以及配置hosts）<br>GATEWAY=网关（网关地址，如果是虚拟机就看虚拟网络配置中的网关）</p>
+<h2 id="3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"><a href="#3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）" class="headerlink" title="3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"></a>3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）</h2><h3 id="vi-etc-udev-rules-d-70-persistent-net-rules"><a href="#vi-etc-udev-rules-d-70-persistent-net-rules" class="headerlink" title="vi /etc/udev/rules.d/70-persistent-net.rules"></a>vi /etc/udev/rules.d/70-persistent-net.rules</h3><p>删除原eth0，把eth1改成eth0</p>
+<h2 id="4-修改hosts文件（重要的一匹！！！！）"><a href="#4-修改hosts文件（重要的一匹！！！！）" class="headerlink" title="4. 修改hosts文件（重要的一匹！！！！）"></a>4. 修改hosts文件（重要的一匹！！！！）</h2><h3 id="vi-etc-hosts"><a href="#vi-etc-hosts" class="headerlink" title="vi /etc/hosts"></a>vi /etc/hosts</h3><p>格式： IP地址  域名</p>
+<h2 id="5-（补充）当域名ping不通外网时候的解决办法"><a href="#5-（补充）当域名ping不通外网时候的解决办法" class="headerlink" title="5.（补充）当域名ping不通外网时候的解决办法"></a>5.（补充）当域名ping不通外网时候的解决办法</h2><h3 id="vi-etc-resolv-conf"><a href="#vi-etc-resolv-conf" class="headerlink" title="vi /etc/resolv.conf"></a>vi /etc/resolv.conf</h3><p>   设置DNS服务器<br>   nameserver 8.8.8.8<br>   nameserver 8.8.4.4</p>
+<h2 id="6-给hadoop新建一个专属用户"><a href="#6-给hadoop新建一个专属用户" class="headerlink" title="6.给hadoop新建一个专属用户"></a>6.给hadoop新建一个专属用户</h2><h3 id="useradd-用户名-passwd-密码"><a href="#useradd-用户名-passwd-密码" class="headerlink" title="useradd 用户名 passwd 密码"></a>useradd 用户名 passwd 密码</h3><h2 id="7-简单两步配置ssh免密登陆"><a href="#7-简单两步配置ssh免密登陆" class="headerlink" title="7.简单两步配置ssh免密登陆"></a>7.简单两步配置ssh免密登陆</h2><h3 id="ssh-keygen（三下回车）"><a href="#ssh-keygen（三下回车）" class="headerlink" title="ssh-keygen（三下回车）"></a>ssh-keygen（三下回车）</h3><h3 id="ssh-copy-id-主机名（输入密码）"><a href="#ssh-copy-id-主机名（输入密码）" class="headerlink" title="ssh-copy-id 主机名（输入密码）"></a>ssh-copy-id 主机名（输入密码）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">接下来就可以感受hadoop了</div></pre></td></tr></table></figure>
       
 
       
@@ -203,47 +328,6 @@ context.write(K,V);
 <h2 id="2-使用Thread和Runnable的区别"><a href="#2-使用Thread和Runnable的区别" class="headerlink" title="2.使用Thread和Runnable的区别"></a>2.使用Thread和Runnable的区别</h2><p>Thread：先继承Thread，然后通过new来实现类</p>
 <p>Runnable：先继承Runnable，然后new Thread(new 实现类的对象,线程名)</p>
 
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-Linux安装hadoop前的配置" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/09/25/Linux安装hadoop前的配置/">Linux安装hadoop前的配置</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/09/25/Linux安装hadoop前的配置/" class="article-date">
-  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="基本几步搞定linux配置"><a href="#基本几步搞定linux配置" class="headerlink" title="基本几步搞定linux配置"></a>基本几步搞定linux配置</h1><h2 id="自己看视频总结的。。"><a href="#自己看视频总结的。。" class="headerlink" title="自己看视频总结的。。"></a>自己看视频总结的。。</h2><p>在centos用minimal安装成功后..先干这几步</p>
-<h2 id="1-修改网卡的基本配置"><a href="#1-修改网卡的基本配置" class="headerlink" title="1. 修改网卡的基本配置"></a>1. 修改网卡的基本配置</h2><h3 id="vi-etc-sysconfig-network-scripts-ifcfg-etho"><a href="#vi-etc-sysconfig-network-scripts-ifcfg-etho" class="headerlink" title="vi /etc/sysconfig/network-scripts/ifcfg-etho"></a>vi /etc/sysconfig/network-scripts/ifcfg-etho</h3><p>DEVICE=eth0 （网卡的物理位置）<br>ONBOOT=yes（默认加载项）<br>BOOTPROTO=static（设置成静态网卡）<br>IPADDR=设置的ip地址（不用解释了吧）</p>
-<h2 id="2-修改网卡的全局配置"><a href="#2-修改网卡的全局配置" class="headerlink" title="2. 修改网卡的全局配置"></a>2. 修改网卡的全局配置</h2><h3 id="vi-etc-sysconfig-network"><a href="#vi-etc-sysconfig-network" class="headerlink" title="vi /etc/sysconfig/network"></a>vi /etc/sysconfig/network</h3><p>NETWORKING=yes<br>HOSTNAME=主机名（全局主机名，用于区分集群的机器，以及配置hosts）<br>GATEWAY=网关（网关地址，如果是虚拟机就看虚拟网络配置中的网关）</p>
-<h2 id="3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"><a href="#3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）" class="headerlink" title="3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"></a>3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）</h2><h3 id="vi-etc-udev-rules-d-70-persistent-net-rules"><a href="#vi-etc-udev-rules-d-70-persistent-net-rules" class="headerlink" title="vi /etc/udev/rules.d/70-persistent-net.rules"></a>vi /etc/udev/rules.d/70-persistent-net.rules</h3><p>删除原eth0，把eth1改成eth0</p>
-<h2 id="4-修改hosts文件（重要的一匹！！！！）"><a href="#4-修改hosts文件（重要的一匹！！！！）" class="headerlink" title="4. 修改hosts文件（重要的一匹！！！！）"></a>4. 修改hosts文件（重要的一匹！！！！）</h2><h3 id="vi-etc-hosts"><a href="#vi-etc-hosts" class="headerlink" title="vi /etc/hosts"></a>vi /etc/hosts</h3><p>格式： IP地址  域名</p>
-<h2 id="5-（补充）当域名ping不通外网时候的解决办法"><a href="#5-（补充）当域名ping不通外网时候的解决办法" class="headerlink" title="5.（补充）当域名ping不通外网时候的解决办法"></a>5.（补充）当域名ping不通外网时候的解决办法</h2><h3 id="vi-etc-resolv-conf"><a href="#vi-etc-resolv-conf" class="headerlink" title="vi /etc/resolv.conf"></a>vi /etc/resolv.conf</h3><p>   设置DNS服务器<br>   nameserver 8.8.8.8<br>   nameserver 8.8.4.4</p>
-<h2 id="6-给hadoop新建一个专属用户"><a href="#6-给hadoop新建一个专属用户" class="headerlink" title="6.给hadoop新建一个专属用户"></a>6.给hadoop新建一个专属用户</h2><h3 id="useradd-用户名-passwd-密码"><a href="#useradd-用户名-passwd-密码" class="headerlink" title="useradd 用户名 passwd 密码"></a>useradd 用户名 passwd 密码</h3><h2 id="7-简单两步配置ssh免密登陆"><a href="#7-简单两步配置ssh免密登陆" class="headerlink" title="7.简单两步配置ssh免密登陆"></a>7.简单两步配置ssh免密登陆</h2><h3 id="ssh-keygen（三下回车）"><a href="#ssh-keygen（三下回车）" class="headerlink" title="ssh-keygen（三下回车）"></a>ssh-keygen（三下回车）</h3><h3 id="ssh-copy-id-主机名（输入密码）"><a href="#ssh-copy-id-主机名（输入密码）" class="headerlink" title="ssh-copy-id 主机名（输入密码）"></a>ssh-copy-id 主机名（输入密码）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">接下来就可以感受hadoop了</div></pre></td></tr></table></figure>
       
 
       

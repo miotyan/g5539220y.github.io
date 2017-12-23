@@ -28,6 +28,56 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-安装Hive---属于一个小白的极速安装" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/23/安装Hive---属于一个小白的极速安装/">安装Hive---属于一个小白的极速安装</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/23/安装Hive---属于一个小白的极速安装/" class="article-date">
+  <time datetime="2017-12-23T14:28:00.000Z" itemprop="datePublished">2017-12-23</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="安装之前一定要注意三件事"><a href="#安装之前一定要注意三件事" class="headerlink" title="安装之前一定要注意三件事"></a>安装之前一定要注意三件事</h2><h3 id="1-元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接"><a href="#1-元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接" class="headerlink" title="1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接"></a>1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接</h3><h3 id="2-hadoop的jline与hive包中的jline的版本是否一致"><a href="#2-hadoop的jline与hive包中的jline的版本是否一致" class="headerlink" title="2. hadoop的jline与hive包中的jline的版本是否一致"></a>2. hadoop的jline与hive包中的jline的版本是否一致</h3><h3 id="3-hdfs是不是正常，（比如安全模式之类的）"><a href="#3-hdfs是不是正常，（比如安全模式之类的）" class="headerlink" title="3. hdfs是不是正常，（比如安全模式之类的）"></a>3. hdfs是不是正常，（比如安全模式之类的）</h3><h2 id="解决这三件事"><a href="#解决这三件事" class="headerlink" title="解决这三件事"></a>解决这三件事</h2><p>把数据库修理好！如果jline版本不同，把hive包中的jline包拷贝到hadoop包中，hdfs不好使就接触安全模式，格式化等！</p>
+<h3 id="hive的三种安装模式"><a href="#hive的三种安装模式" class="headerlink" title="hive的三种安装模式"></a>hive的三种安装模式</h3><ol>
+<li>单机模式：自己瞎玩的模式，不需要元数据库，只要hdfs就行，此时的元数据放在hive内嵌的derby库里。还只能一个人登陆</li>
+<li>正常模式：很正经的一种模式，元数据存在本地机器的数据库中（Mysql、Oracle等）。其他正常。</li>
+<li>远程模式：很屌的一种模式，这时元数据放在一个远程的数据库中。其余和正常模式一样。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ps.元数据到底是啥玩意！</div><div class="line">元数据就是描述这个数据库里的数据长啥样的数据！描述什么字段名啊，长度啊，类型啊，大小啊等一系列信息</div><div class="line">假如一个人。数据就是他的零件器官！元数据就是这个人器官的医学描述报告！</div></pre></td></tr></table></figure>
+<h2 id="开搞！"><a href="#开搞！" class="headerlink" title="开搞！"></a>开搞！</h2><h3 id="第一步：老办法！当然是tar-zxvf-文件名-C-地址-啦"><a href="#第一步：老办法！当然是tar-zxvf-文件名-C-地址-啦" class="headerlink" title="第一步：老办法！当然是tar -zxvf 文件名 -C 地址 啦"></a>第一步：老办法！当然是tar -zxvf 文件名 -C 地址 啦</h3><h3 id="第二步：配置hive-env-sh-安装阿帕奇的东西多了就知道这货就是配置环境变量的"><a href="#第二步：配置hive-env-sh-安装阿帕奇的东西多了就知道这货就是配置环境变量的" class="headerlink" title="第二步：配置hive-env.sh(安装阿帕奇的东西多了就知道这货就是配置环境变量的)"></a>第二步：配置hive-env.sh(安装阿帕奇的东西多了就知道这货就是配置环境变量的)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">export JAVA_HOME=&#123;JDK安装位置&#125;</div><div class="line">export HADOOP_HOME=&#123;hadoop安装位置&#125;</div><div class="line">export HIVE_HOME=&#123;hive安装位置&#125;</div><div class="line">把这三个HOME写到最低下</div></pre></td></tr></table></figure>
+<h3 id="第三步：配置hive-log4j-properties（这步主要是跟上新时代）"><a href="#第三步：配置hive-log4j-properties（这步主要是跟上新时代）" class="headerlink" title="第三步：配置hive-log4j.properties（这步主要是跟上新时代）"></a>第三步：配置hive-log4j.properties（这步主要是跟上新时代）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">将EventCounter修改成org.apache.hadoop.log.metrics.EventCounter</div><div class="line">改之前</div><div class="line">#log4j.appender.EventCounter=org.apache.hadoop.hive.shims.HiveEventCounter</div><div class="line">改之后</div><div class="line">log4j.appender.EventCounter=org.apache.hadoop.log.metrics.EventCounter</div></pre></td></tr></table></figure>
+<h4 id="不改这一步就会一直提示"><a href="#不改这一步就会一直提示" class="headerlink" title="不改这一步就会一直提示"></a>不改这一步就会一直提示</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">WARNING: org.apache.hadoop.metrics.jvm.EventCounter is deprecated. Please use org.apache.hadoop.log.metrics.EventCounter in all the log4j.properties files.</div></pre></td></tr></table></figure>
+<h4 id="翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！"><a href="#翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！" class="headerlink" title="翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！"></a>翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！</h4><h3 id="第四步：配置hive-site-xml"><a href="#第四步：配置hive-site-xml" class="headerlink" title="第四步：配置hive-site.xml"></a>第四步：配置hive-site.xml</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">&lt;configuration&gt;</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionURL&lt;/name&gt;</div><div class="line">                &lt;value&gt;jdbc:mysql://localhost:3306/hivedb?createDatabaseIfNotExist=true&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        这是元数据库地址！ 我爱用mysql，所以端口是3306啦，后面create。。。一堆就是如果数据库不存在就建一个</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionDriverName&lt;/name&gt;</div><div class="line">                &lt;value&gt;com.mysql.jdbc.Driver&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        第五步的关键所在，jdbc的jar包配置</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionUserName&lt;/name&gt;</div><div class="line">                &lt;value&gt;root&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        元数据库登录名</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionPassword&lt;/name&gt;</div><div class="line">                &lt;value&gt;root&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        元数据库登陆密码</div><div class="line">&lt;/configuration&gt;</div></pre></td></tr></table></figure>
+<h3 id="第五步：把jdbc的jar包拉近hive安装目录的lib下"><a href="#第五步：把jdbc的jar包拉近hive安装目录的lib下" class="headerlink" title="第五步：把jdbc的jar包拉近hive安装目录的lib下"></a>第五步：把jdbc的jar包拉近hive安装目录的lib下</h3><p>别给自己解释了。连linux基本操作都忘了，那就是失忆了！</p>
+<h2 id="运行！"><a href="#运行！" class="headerlink" title="运行！"></a>运行！</h2><p>运行bin/hive 这个是交互式shell</p>
+<p>运行bin/hiveserver2 前台服务器模式<br>运行nohup bin/hiveserver2 1&gt;/var/log/hiveserver.log 2&gt;/var/log/hiveserver.err &amp; 后台服务器模式</p>
+<p>这种服务器模式可以通过beeline的客户端来连它，只不过需要输入用户名<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">beeline&gt; !connect jdbc:hive2//mini1:10000</div><div class="line">（haihan是hiveserver2所启动的那台主机名，端口默认是10000）</div><div class="line">或者一次成：</div><div class="line">bin/beeline -u jdbc:hive2://mini1:10000 -n hadoop</div></pre></td></tr></table></figure></p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-zookeeper的个人理解和傻瓜式安装" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -225,7 +275,7 @@
 <p>reduce 阶段就是分包与和包，先建两个bean分别管两个文件中的信息，最后根据自己的喜好把其中的一个bean和另外一个bean的信息合并，再把bean输出。<br>这里是一个bean存一半信息，bean类里以及定义了涉及到的所有字段。</p>
 <p>补充：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">BeanUtils.copyProperties(gb, g);</div></pre></td></tr></table></figure></p>
 <p>这句话是把后面来的对象里面的值赋给当前对象的值，用在这里是避免只输入一个对象，而造成了重复！</p>
-<h2 id="程序2"><a href="#程序2" class="headerlink" title="程序2"></a>程序2</h2><h3 id="需求：生存索引文件，例如类似：精英之作-gun-log-2-（皮肤名-文件名-在文件中出现的次数"><a href="#需求：生存索引文件，例如类似：精英之作-gun-log-2-（皮肤名-文件名-在文件中出现的次数" class="headerlink" title="需求：生存索引文件，例如类似：精英之作  gun.log  2  （皮肤名  文件名  在文件中出现的次数)"></a>需求：生存索引文件，例如类似：精英之作  gun.log  2  （皮肤名  文件名  在文件中出现的次数)</h3><h3 id="分析-有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词-后面的出现的次数-就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！"><a href="#分析-有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词-后面的出现的次数-就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！" class="headerlink" title="分析: 有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词 后面的出现的次数 就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！"></a>分析: 有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词 后面的出现的次数 就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！</h3><h3 id="step1"><a href="#step1" class="headerlink" title="step1"></a>step1</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line">static class inverMapper extends Mapper&lt;LongWritable, Text, Text, IntWritable&gt;</div><div class="line">         &#123;</div><div class="line">              @Override</div><div class="line">       	protected void map(LongWritable key, Text value,Context context)</div><div class="line">       			throws IOException, InterruptedException &#123;</div><div class="line">       	      String line = new String(value.getBytes(), 0, value.getLength(), &quot;GBK&quot;);</div><div class="line">       	      String[] fields = line.split(&quot;\t&quot;);</div><div class="line">       	      FileSplit inputSplit = (FileSplit) context.getInputSplit();</div><div class="line">       	      String fname = inputSplit.getPath().getName();</div><div class="line">       	      Text k = new Text();</div><div class="line">       	      IntWritable v = new IntWritable(1);</div><div class="line">       	      k.set(fields[1]+&quot;----&gt;&quot;+fname);</div><div class="line">       	      context.write(k, v);</div><div class="line">       	&#125;  </div><div class="line">         &#125;</div><div class="line">         </div><div class="line">         static class inverReducer extends Reducer&lt;Text, IntWritable, Text, IntWritable&gt;</div><div class="line">         &#123;</div><div class="line">       	      @Override</div><div class="line">       	    protected void reduce(Text key, Iterable&lt;IntWritable&gt; value,</div><div class="line">       	    		Reducer&lt;Text, IntWritable, Text, IntWritable&gt;.Context context)</div><div class="line">       	    		throws IOException, InterruptedException &#123;</div><div class="line">       	      int count = 0 ;</div><div class="line">       	      for(IntWritable a:value)</div><div class="line">       	      &#123;  </div><div class="line">       	    	  count+=a.get();</div><div class="line">       	      &#125;</div><div class="line">       	      IntWritable v = new IntWritable(count);</div><div class="line">       	      context.write(key, v);</div><div class="line">       	    		  </div><div class="line">       	    &#125;</div><div class="line">         &#125;</div></pre></td></tr></table></figure>
+<h2 id="程序2"><a href="#程序2" class="headerlink" title="程序2"></a>程序2</h2><h3 id="需求：生成索引文件，例如类似：精英之作-gun-log-2-（皮肤名-文件名-在文件中出现的次数"><a href="#需求：生成索引文件，例如类似：精英之作-gun-log-2-（皮肤名-文件名-在文件中出现的次数" class="headerlink" title="需求：生成索引文件，例如类似：精英之作  gun.log  2  （皮肤名  文件名  在文件中出现的次数)"></a>需求：生成索引文件，例如类似：精英之作  gun.log  2  （皮肤名  文件名  在文件中出现的次数)</h3><h3 id="分析-有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词-后面的出现的次数-就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！"><a href="#分析-有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词-后面的出现的次数-就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！" class="headerlink" title="分析: 有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词 后面的出现的次数 就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！"></a>分析: 有了上个程序的取文件名这个就非常简单，前面的文件名和皮肤名类似与WordCount中的单词 后面的出现的次数 就是单词计数。不同的的是，由于文件的格式，这个结果需要两个mr文件串一起执行！</h3><h3 id="step1"><a href="#step1" class="headerlink" title="step1"></a>step1</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line">static class inverMapper extends Mapper&lt;LongWritable, Text, Text, IntWritable&gt;</div><div class="line">         &#123;</div><div class="line">              @Override</div><div class="line">       	protected void map(LongWritable key, Text value,Context context)</div><div class="line">       			throws IOException, InterruptedException &#123;</div><div class="line">       	      String line = new String(value.getBytes(), 0, value.getLength(), &quot;GBK&quot;);</div><div class="line">       	      String[] fields = line.split(&quot;\t&quot;);</div><div class="line">       	      FileSplit inputSplit = (FileSplit) context.getInputSplit();</div><div class="line">       	      String fname = inputSplit.getPath().getName();</div><div class="line">       	      Text k = new Text();</div><div class="line">       	      IntWritable v = new IntWritable(1);</div><div class="line">       	      k.set(fields[1]+&quot;----&gt;&quot;+fname);</div><div class="line">       	      context.write(k, v);</div><div class="line">       	&#125;  </div><div class="line">         &#125;</div><div class="line">         </div><div class="line">         static class inverReducer extends Reducer&lt;Text, IntWritable, Text, IntWritable&gt;</div><div class="line">         &#123;</div><div class="line">       	      @Override</div><div class="line">       	    protected void reduce(Text key, Iterable&lt;IntWritable&gt; value,</div><div class="line">       	    		Reducer&lt;Text, IntWritable, Text, IntWritable&gt;.Context context)</div><div class="line">       	    		throws IOException, InterruptedException &#123;</div><div class="line">       	      int count = 0 ;</div><div class="line">       	      for(IntWritable a:value)</div><div class="line">       	      &#123;  </div><div class="line">       	    	  count+=a.get();</div><div class="line">       	      &#125;</div><div class="line">       	      IntWritable v = new IntWritable(count);</div><div class="line">       	      context.write(key, v);</div><div class="line">       	    		  </div><div class="line">       	    &#125;</div><div class="line">         &#125;</div></pre></td></tr></table></figure>
 <p>很容易理解在map阶段中，先取了名字，然后把文件名和皮肤名拼在一起当作wordcount中的单词，其余的和wordcount一样了；<br>但是输出的结果是</p>
 <ul>
 <li>精英之作  gun.log  2</li>
@@ -423,90 +473,6 @@ job.setPartitionerClass(那个Partition类的类名.class);
 <h2 id="额外内容：在windows里面本地运行mr程序的配置"><a href="#额外内容：在windows里面本地运行mr程序的配置" class="headerlink" title="额外内容：在windows里面本地运行mr程序的配置"></a>额外内容：在windows里面本地运行mr程序的配置</h2><p>需要在hadoop的依赖里面有winutil和hadoop.dll（hadoop.dll需要放在system32中），然后把hadoop文件夹和bin文件夹配到系统环境变量中</p>
 <h2 id="在main程序中运行本地和集群需要给的参数："><a href="#在main程序中运行本地和集群需要给的参数：" class="headerlink" title="在main程序中运行本地和集群需要给的参数："></a>在main程序中运行本地和集群需要给的参数：</h2><h3 id="本地："><a href="#本地：" class="headerlink" title="本地："></a>本地：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">conf.set(&quot;mapreduce.framework.name&quot;,&quot;local&quot;)</div><div class="line">conf.set(&quot;fs.defaultFs&quot;,&quot;file:///&quot;)</div></pre></td></tr></table></figure>
 <h3 id="集群"><a href="#集群" class="headerlink" title="集群:"></a>集群:</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">conf.set(&quot;mapreduce.framework.name&quot;,&quot;yarn&quot;)</div><div class="line">conf.set(&quot;yarn.resourcemanager.hostname&quot;,&quot;haihan&quot;)</div><div class="line">conf.set(&quot;fs.defaultFs&quot;,&quot;hdfs://haihan:9000/&quot;)</div></pre></td></tr></table></figure>
-
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-关于MapReduce的所有个人理解" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/12/11/关于MapReduce的所有个人理解/">关于MapReduce的所有个人理解</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/12/11/关于MapReduce的所有个人理解/" class="article-date">
-  <time datetime="2017-12-11T10:14:00.000Z" itemprop="datePublished">2017-12-11</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"><a href="#MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。" class="headerlink" title="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"></a>MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。</h1><h3 id="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"><a href="#mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）" class="headerlink" title="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"></a>mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）</h3><h3 id="运行mr程序有三个进程"><a href="#运行mr程序有三个进程" class="headerlink" title="运行mr程序有三个进程"></a>运行mr程序有三个进程</h3><ol>
-<li>MRAppMaster：负责整个程序的过程调度及状态协调</li>
-<li>mapTask：负责map阶段的数据处理流程</li>
-<li>ReduceTask：负责reduce阶段的数据处理流程</li>
-</ol>
-<h2 id="mr程序运行第一步：文件切片"><a href="#mr程序运行第一步：文件切片" class="headerlink" title="mr程序运行第一步：文件切片"></a>mr程序运行第一步：文件切片</h2><p>文件的切片是由FileInputFormat实现类的getSplits()方法完成，先读取目录，然后遍历所有文件，获取文件大小fs.sizeOf(文件名),计算切片大小<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">computerSplitSize(Math.max(minSize.Math.max(maxSize.blocksize))=blocksize=128M</div></pre></td></tr></table></figure></p>
-<p>blocksize 默认128M，hdfs一个文件的大小，mr程序为了防止不必要的网络传输问题，默认设置为和hdfs中的文件切片一样大</p>
-<p>比如：</p>
-<blockquote>
-<p>有两个文件 gy.txt 大小为 200M haihan.txt 大小为8M </p>
-</blockquote>
-<p>切片后为</p>
-<blockquote>
-<p>gy.txt.split1 0~128M  gy.txt.split2 128M~200M haihan.txt.split 0~8M</p>
-</blockquote>
-<p>由此可见，小文件越多效率越低，注意上传文件时的合并或写一个小mr文件来合并、或者用Inputformat中的CombineInputFormat。</p>
-<p>如果文件太大了，就把hdfs上的切片blocksize变大</p>
-<blockquote>
-<h4 id="设置reduce运行个数"><a href="#设置reduce运行个数" class="headerlink" title="设置reduce运行个数"></a>设置reduce运行个数</h4><p>job.setNumReduceTasks(4);</p>
-</blockquote>
-<p>如设置的数据分布不均匀，就有可能在reduce阶段产生数据倾斜（好多数据都跑一个reducetask里面了）<br>注意： reducetask数量并不是任意设置，还要考虑业务逻辑需求，有些情况下，需要计算全局汇总结果，就只能有1个reducetask</p>
-<blockquote>
-<p>尽量不要运行太多的reduce task。对大多数job来说，最好rduce的个数最多和集群中的reduce持平，或者比集群的 reduce slots小。这个对于小集群而言，尤其重要。</p>
-</blockquote>
-<p>运行后的maptask调用Inputformat （这货是个抽象类有好多实现 mr程序主要用 FileInputformat下的TextInputFormat（文本文件）和SequenceFileInpitFormat(））InputFormat调用RecordReader来读文件切切切，读好后传给map方法。</p>
-<h2 id="mr程序运行第二步："><a href="#mr程序运行第二步：" class="headerlink" title="mr程序运行第二步："></a>mr程序运行第二步：</h2><p>调用map方法拿到kv对，运行map逻辑后（map逻辑是由自己瞎写的跟人家框架没关系），通过context.write写出到内部组件OutPutCollector（收集器~框架给的咱们动不了）</p>
-<h2 id="mr程序运行第三步："><a href="#mr程序运行第三步：" class="headerlink" title="mr程序运行第三步："></a>mr程序运行第三步：</h2><p>OutPutCollector把自己瞎写的逻辑以及自己定义的输出 输出到一个环形缓冲区（这个内存一共默认100M，学名环形缓冲区内存，就是个环形数组队列！但只能写80%）<br>spiller这个东西负责把缓冲区分区并把数据排序并溢出到文件到内存中，排序用内存就是用剩下那个20%。</p>
-<p>spiller这个分区就是Partitoner 默认为HashPartitioner （HashCode Mod 2）</p>
-<p>排序则是快速排序KeycomparorTo，这里所有的排序都是以key来排序</p>
-<p>比如：</p>
-<blockquote>
-<p>排序前：a1，c1，b1，a1，b1 排序后：（a1，a1，c1）（b1，b1）</p>
-</blockquote>
-<p>然后从内存写出来写到文件中（溢出一次写一次，产生一个文件，可能为多个文件）文件就在maptask工作目录里面，溢出的结果都是分区且区内有序的。<br>当最后一次溢出完，把剩下的没满的一次溢出。溢出后marge（归并）成一个大文件。</p>
-<h3 id="效率提高大法：conbiner组件（预先reduce）"><a href="#效率提高大法：conbiner组件（预先reduce）" class="headerlink" title="效率提高大法：conbiner组件（预先reduce）"></a>效率提高大法：conbiner组件（预先reduce）</h3><p>为了防止在溢出reduce时过慢，conbiner组件可以在mapTask本地时将文件进行reduce 以及在合并文件后进行reduce<br>这个可以自定义！！！！！！</p>
-<h2 id="mr程序运行第四步："><a href="#mr程序运行第四步：" class="headerlink" title="mr程序运行第四步："></a>mr程序运行第四步：</h2><p>说明：reduceTask的数量与spiller分的区没有直接关系，reduceTask的数量由我自己定的或框架默认。当然要想办法让它们对应起来</p>
-<p>比如：</p>
-<blockquote>
-<p>key.hashCode % numreduce</p>
-</blockquote>
-<p>reduceTask下载mapTask归并的文件到reduceTask的机器本地磁盘目录，然后再次合并</p>
-<p>比如：</p>
-<blockquote>
-<p>a1，a1，c1，b1，b1</p>
-</blockquote>
-<p>此时reducer中的reduce方法调用</p>
-<h3 id="GroupingComparor（k，next-k）"><a href="#GroupingComparor（k，next-k）" class="headerlink" title="GroupingComparor（k，next k）"></a>GroupingComparor（k，next k）</h3><p>方法来判断谁和谁相同，可以自己定义文件中的k相同,传入k和v的迭代器，把所有相同的k合并成一个k，这个k带一组v<br>然后context.write()</p>
-<h3 id="mr程序运行第五步："><a href="#mr程序运行第五步：" class="headerlink" title="mr程序运行第五步："></a>mr程序运行第五步：</h3><p>reduceTask调用OutputFormat中的TextOutputFormat，RecordWriter write（k，v）写到HDFS中，名字为part-1-000000</p>
-<h2 id="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"><a href="#shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！" class="headerlink" title="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"></a>shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！</h2><p>听着很屌其实就是那么一回事</p>
 
       
 

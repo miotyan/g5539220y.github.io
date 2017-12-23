@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>安装Hive---属于一个小白的极速安装 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="安装之前一定要注意三件事1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接2. hadoop的jline与hive包中的jline的版本是否一致3. hdfs是不是正常，（比如安全模式之类的）解决这三件事把数据库修理好！如果jline版本不同，把hive包中的jline包拷贝到hadoop包中，hdfs不好使就接触安全模式，格式化等！ hive的三种安装">
+<meta name="keywords" content="hive">
+<meta property="og:type" content="article">
+<meta property="og:title" content="安装Hive---属于一个小白的极速安装">
+<meta property="og:url" content="http://yoursite.com/2017/12/23/安装Hive---属于一个小白的极速安装/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="安装之前一定要注意三件事1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接2. hadoop的jline与hive包中的jline的版本是否一致3. hdfs是不是正常，（比如安全模式之类的）解决这三件事把数据库修理好！如果jline版本不同，把hive包中的jline包拷贝到hadoop包中，hdfs不好使就接触安全模式，格式化等！ hive的三种安装">
+<meta property="og:updated_time" content="2017-12-23T14:28:43.612Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="安装Hive---属于一个小白的极速安装">
+<meta name="twitter:description" content="安装之前一定要注意三件事1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接2. hadoop的jline与hive包中的jline的版本是否一致3. hdfs是不是正常，（比如安全模式之类的）解决这三件事把数据库修理好！如果jline版本不同，把hive包中的jline包拷贝到hadoop包中，hdfs不好使就接触安全模式，格式化等！ hive的三种安装">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-安装Hive---属于一个小白的极速安装" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      安装Hive---属于一个小白的极速安装
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/23/安装Hive---属于一个小白的极速安装/" class="article-date">
+  <time datetime="2017-12-23T14:28:00.000Z" itemprop="datePublished">2017-12-23</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="安装之前一定要注意三件事"><a href="#安装之前一定要注意三件事" class="headerlink" title="安装之前一定要注意三件事"></a>安装之前一定要注意三件事</h2><h3 id="1-元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接"><a href="#1-元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接" class="headerlink" title="1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接"></a>1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接</h3><h3 id="2-hadoop的jline与hive包中的jline的版本是否一致"><a href="#2-hadoop的jline与hive包中的jline的版本是否一致" class="headerlink" title="2. hadoop的jline与hive包中的jline的版本是否一致"></a>2. hadoop的jline与hive包中的jline的版本是否一致</h3><h3 id="3-hdfs是不是正常，（比如安全模式之类的）"><a href="#3-hdfs是不是正常，（比如安全模式之类的）" class="headerlink" title="3. hdfs是不是正常，（比如安全模式之类的）"></a>3. hdfs是不是正常，（比如安全模式之类的）</h3><h2 id="解决这三件事"><a href="#解决这三件事" class="headerlink" title="解决这三件事"></a>解决这三件事</h2><p>把数据库修理好！如果jline版本不同，把hive包中的jline包拷贝到hadoop包中，hdfs不好使就接触安全模式，格式化等！</p>
+<h3 id="hive的三种安装模式"><a href="#hive的三种安装模式" class="headerlink" title="hive的三种安装模式"></a>hive的三种安装模式</h3><ol>
+<li>单机模式：自己瞎玩的模式，不需要元数据库，只要hdfs就行，此时的元数据放在hive内嵌的derby库里。还只能一个人登陆</li>
+<li>正常模式：很正经的一种模式，元数据存在本地机器的数据库中（Mysql、Oracle等）。其他正常。</li>
+<li>远程模式：很屌的一种模式，这时元数据放在一个远程的数据库中。其余和正常模式一样。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ps.元数据到底是啥玩意！</div><div class="line">元数据就是描述这个数据库里的数据长啥样的数据！描述什么字段名啊，长度啊，类型啊，大小啊等一系列信息</div><div class="line">假如一个人。数据就是他的零件器官！元数据就是这个人器官的医学描述报告！</div></pre></td></tr></table></figure>
+<h2 id="开搞！"><a href="#开搞！" class="headerlink" title="开搞！"></a>开搞！</h2><h3 id="第一步：老办法！当然是tar-zxvf-文件名-C-地址-啦"><a href="#第一步：老办法！当然是tar-zxvf-文件名-C-地址-啦" class="headerlink" title="第一步：老办法！当然是tar -zxvf 文件名 -C 地址 啦"></a>第一步：老办法！当然是tar -zxvf 文件名 -C 地址 啦</h3><h3 id="第二步：配置hive-env-sh-安装阿帕奇的东西多了就知道这货就是配置环境变量的"><a href="#第二步：配置hive-env-sh-安装阿帕奇的东西多了就知道这货就是配置环境变量的" class="headerlink" title="第二步：配置hive-env.sh(安装阿帕奇的东西多了就知道这货就是配置环境变量的)"></a>第二步：配置hive-env.sh(安装阿帕奇的东西多了就知道这货就是配置环境变量的)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">export JAVA_HOME=&#123;JDK安装位置&#125;</div><div class="line">export HADOOP_HOME=&#123;hadoop安装位置&#125;</div><div class="line">export HIVE_HOME=&#123;hive安装位置&#125;</div><div class="line">把这三个HOME写到最低下</div></pre></td></tr></table></figure>
+<h3 id="第三步：配置hive-log4j-properties（这步主要是跟上新时代）"><a href="#第三步：配置hive-log4j-properties（这步主要是跟上新时代）" class="headerlink" title="第三步：配置hive-log4j.properties（这步主要是跟上新时代）"></a>第三步：配置hive-log4j.properties（这步主要是跟上新时代）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">将EventCounter修改成org.apache.hadoop.log.metrics.EventCounter</div><div class="line">改之前</div><div class="line">#log4j.appender.EventCounter=org.apache.hadoop.hive.shims.HiveEventCounter</div><div class="line">改之后</div><div class="line">log4j.appender.EventCounter=org.apache.hadoop.log.metrics.EventCounter</div></pre></td></tr></table></figure>
+<h4 id="不改这一步就会一直提示"><a href="#不改这一步就会一直提示" class="headerlink" title="不改这一步就会一直提示"></a>不改这一步就会一直提示</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">WARNING: org.apache.hadoop.metrics.jvm.EventCounter is deprecated. Please use org.apache.hadoop.log.metrics.EventCounter in all the log4j.properties files.</div></pre></td></tr></table></figure>
+<h4 id="翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！"><a href="#翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！" class="headerlink" title="翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！"></a>翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！</h4><h3 id="第四步：配置hive-site-xml"><a href="#第四步：配置hive-site-xml" class="headerlink" title="第四步：配置hive-site.xml"></a>第四步：配置hive-site.xml</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">&lt;configuration&gt;</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionURL&lt;/name&gt;</div><div class="line">                &lt;value&gt;jdbc:mysql://localhost:3306/hivedb?createDatabaseIfNotExist=true&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        这是元数据库地址！ 我爱用mysql，所以端口是3306啦，后面create。。。一堆就是如果数据库不存在就建一个</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionDriverName&lt;/name&gt;</div><div class="line">                &lt;value&gt;com.mysql.jdbc.Driver&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        第五步的关键所在，jdbc的jar包配置</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionUserName&lt;/name&gt;</div><div class="line">                &lt;value&gt;root&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        元数据库登录名</div><div class="line">        &lt;property&gt;</div><div class="line">                &lt;name&gt;javax.jdo.option.ConnectionPassword&lt;/name&gt;</div><div class="line">                &lt;value&gt;root&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        元数据库登陆密码</div><div class="line">&lt;/configuration&gt;</div></pre></td></tr></table></figure>
+<h3 id="第五步：把jdbc的jar包拉近hive安装目录的lib下"><a href="#第五步：把jdbc的jar包拉近hive安装目录的lib下" class="headerlink" title="第五步：把jdbc的jar包拉近hive安装目录的lib下"></a>第五步：把jdbc的jar包拉近hive安装目录的lib下</h3><p>别给自己解释了。连linux基本操作都忘了，那就是失忆了！</p>
+<h2 id="运行！"><a href="#运行！" class="headerlink" title="运行！"></a>运行！</h2><p>运行bin/hive 这个是交互式shell</p>
+<p>运行bin/hiveserver2 前台服务器模式<br>运行nohup bin/hiveserver2 1&gt;/var/log/hiveserver.log 2&gt;/var/log/hiveserver.err &amp; 后台服务器模式</p>
+<p>这种服务器模式可以通过beeline的客户端来连它，只不过需要输入用户名<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">beeline&gt; !connect jdbc:hive2//mini1:10000</div><div class="line">（haihan是hiveserver2所启动的那台主机名，端口默认是10000）</div><div class="line">或者一次成：</div><div class="line">bin/beeline -u jdbc:hive2://mini1:10000 -n hadoop</div></pre></td></tr></table></figure></p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/12/21/zookeeper的个人理解和傻瓜式安装/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">zookeeper的个人理解和傻瓜式安装</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2017 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
