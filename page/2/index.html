@@ -28,6 +28,65 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-yarn与mr程序的那些事" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/13/yarn与mr程序的那些事/">yarn与mr程序的那些事</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/13/yarn与mr程序的那些事/" class="article-date">
+  <time datetime="2017-12-13T01:10:00.000Z" itemprop="datePublished">2017-12-13</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="yarn是个运算（cpu、内存、程序和配置文件）资源调度的系统。"><a href="#yarn是个运算（cpu、内存、程序和配置文件）资源调度的系统。" class="headerlink" title="yarn是个运算（cpu、内存、程序和配置文件）资源调度的系统。"></a>yarn是个运算（cpu、内存、程序和配置文件）资源调度的系统。</h1><h2 id="说明："><a href="#说明：" class="headerlink" title="说明："></a>说明：</h2><h3 id="当mr程序放在yarn上运行时，相当于客户端提交到服务器进行运行以及数据处理，yarn只是个运行的平台，只负责程序所需-资源和内存-分配回收的调度工作，yarn与应用程序的内部运作无关，与mr框架低耦合的，spark也可以在上面运行。"><a href="#当mr程序放在yarn上运行时，相当于客户端提交到服务器进行运行以及数据处理，yarn只是个运行的平台，只负责程序所需-资源和内存-分配回收的调度工作，yarn与应用程序的内部运作无关，与mr框架低耦合的，spark也可以在上面运行。" class="headerlink" title="当mr程序放在yarn上运行时，相当于客户端提交到服务器进行运行以及数据处理，yarn只是个运行的平台，只负责程序所需 资源和内存 分配回收的调度工作，yarn与应用程序的内部运作无关，与mr框架低耦合的，spark也可以在上面运行。"></a>当mr程序放在yarn上运行时，相当于客户端提交到服务器进行运行以及数据处理，yarn只是个运行的平台，只负责程序所需 资源和内存 分配回收的调度工作，yarn与应用程序的内部运作无关，与mr框架低耦合的，spark也可以在上面运行。</h3><h3 id="yarn也是个集群结构，yarn的老大是resource-manager，其余是node-manager"><a href="#yarn也是个集群结构，yarn的老大是resource-manager，其余是node-manager" class="headerlink" title="yarn也是个集群结构，yarn的老大是resource manager，其余是node manager."></a>yarn也是个集群结构，yarn的老大是resource manager，其余是node manager.</h3><h3 id="nodemanager-里面的container：运行程序的箱子。yarn通过控制这些container从而实现分配内存和cpu调度。"><a href="#nodemanager-里面的container：运行程序的箱子。yarn通过控制这些container从而实现分配内存和cpu调度。" class="headerlink" title="nodemanager 里面的container：运行程序的箱子。yarn通过控制这些container从而实现分配内存和cpu调度。"></a>nodemanager 里面的container：运行程序的箱子。yarn通过控制这些container从而实现分配内存和cpu调度。</h3><h3 id="一个mr程序运行在yarn上的流程："><a href="#一个mr程序运行在yarn上的流程：" class="headerlink" title="一个mr程序运行在yarn上的流程："></a>一个mr程序运行在yarn上的流程：</h3><ol>
+<li>当mr程序运行，它所在的节点提交运行（job.submit()），运行YarnRunner。yarnrunner先找resoucemanager（用过rpc远程调用）申请提交一个application </li>
+<li>这时resourcemanger返回一个资源提交路径和jobid</li>
+<li>yarnrunner接到路径和id后向hdfs提交资源文件 .staging/application_id </li>
+<li>提交后yarnrunner向resourcemanager返回资源提交完毕，申请运行mrappmaster</li>
+<li>此时resourcemanager执行一个FIFO调度策略的队列（Fair、capacity),同时把yarnrunner提交的信息和资源封装成一个task对象</li>
+<li>nodemanger通过心跳感应和rpc调用，从resourcemanager那里领取一个task任务，</li>
+<li>领取任务后后nodemanager生成容器——container（里面有cpu和内存），container从hdfs中下载所需运行资源，在容器里运行mrappmaster</li>
+<li>mrappmaster向resourcemanager申请运行maptask运行内存和cpu的容器</li>
+<li>resourcemangager接收到请求并向nodemanager发布创建容器任务</li>
+<li>mrappmaster发送程序启动脚本</li>
+<li>mrappmaster再向rm申请N个容器，用来运行reduceTask容器</li>
+<li>reduce的容器向map的容器获取数据，在yarnchild中运行</li>
+<li>全部运行完后mrappmaster向rm注销自己</li>
+</ol>
+<p>###几个小细节</p>
+<ol>
+<li>jobsubmit提交job资源路径时调用FileInputForamt.getSplits()获取切片规划到List<split>序列化成job.split。然后拷贝到.staging/application_id</split></li>
+<li>jobsubmit把各种配置生成一个job.xml也拷贝到.staging/application_id</li>
+<li>jobsumit最后获取Jar包来运行。。。。</li>
+</ol>
+<h2 id="额外内容：在windows里面本地运行mr程序的配置"><a href="#额外内容：在windows里面本地运行mr程序的配置" class="headerlink" title="额外内容：在windows里面本地运行mr程序的配置"></a>额外内容：在windows里面本地运行mr程序的配置</h2><p>需要在hadoop的依赖里面有winutil和hadoop.dll（hadoop.dll需要放在system32中），然后把hadoop文件夹和bin文件夹配到系统环境变量中</p>
+<h2 id="在main程序中运行本地和集群需要给的参数："><a href="#在main程序中运行本地和集群需要给的参数：" class="headerlink" title="在main程序中运行本地和集群需要给的参数："></a>在main程序中运行本地和集群需要给的参数：</h2><h3 id="本地："><a href="#本地：" class="headerlink" title="本地："></a>本地：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">conf.set(&quot;mapreduce.framework.name&quot;,&quot;local&quot;)</div><div class="line">conf.set(&quot;fs.defaultFs&quot;,&quot;file:///&quot;)</div></pre></td></tr></table></figure>
+<h3 id="集群"><a href="#集群" class="headerlink" title="集群:"></a>集群:</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">conf.set(&quot;mapreduce.framework.name&quot;,&quot;yarn&quot;)</div><div class="line">conf.set(&quot;yarn.resourcemanager.hostname&quot;,&quot;haihan&quot;)</div><div class="line">conf.set(&quot;fs.defaultFs&quot;,&quot;hdfs://haihan:9000/&quot;)</div></pre></td></tr></table></figure>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-关于MapReduce的所有个人理解" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -368,7 +427,7 @@ context.write(K,V);
       <footer id="footer">
   
 	<div id="footer-info" class="inner">
-	  &copy; 2017 圈 
+	  &copy; 2018 圈 
 	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
 	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
 	</div>
