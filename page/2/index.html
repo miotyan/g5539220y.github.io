@@ -28,6 +28,46 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-拯救笔记----解决恼人的数据倾斜" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/15/拯救笔记----解决恼人的数据倾斜/">拯救笔记----解决恼人的数据倾斜</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/15/拯救笔记----解决恼人的数据倾斜/" class="article-date">
+  <time datetime="2017-12-15T00:51:00.000Z" itemprop="datePublished">2017-12-15</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜"><a href="#数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜" class="headerlink" title="数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜"></a>数据倾斜：由于有的数据的特殊原因，在map阶段后有很大的一部分数据进入到同一个reduce里面，而导致其他reduce接收的数据少。从而产生了数据倾斜</h2><h3 id="解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行"><a href="#解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行" class="headerlink" title="解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行"></a>解决方法：尽量在map里面解决，利用map的分布式缓存，把需要处理的数据直接放在map里执行</h3><h2 id="实例：map里面的join操作"><a href="#实例：map里面的join操作" class="headerlink" title="实例：map里面的join操作"></a>实例：map里面的join操作</h2><h3 id="要想把文件加载到maptask中！必须知道的四条配置"><a href="#要想把文件加载到maptask中！必须知道的四条配置" class="headerlink" title="要想把文件加载到maptask中！必须知道的四条配置"></a>要想把文件加载到maptask中！必须知道的四条配置</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">job.addArchiveToClassPath(archive);  缓存jar包到maptask运行节点的classpath中</div><div class="line">job.addFileToClassPath(file);        缓存文件到maptask运行节点的classpath中</div><div class="line">job.addCacheArchive(uri);            缓存压缩包到maptask运行节点的工作目录中</div><div class="line">job.addCacheFile(uri);               缓存普通文件到maptask运行节点的工作目录中</div></pre></td></tr></table></figure>
+<h3 id="配置完这四条之后，就可以开始从mapper类里读它了。"><a href="#配置完这四条之后，就可以开始从mapper类里读它了。" class="headerlink" title="配置完这四条之后，就可以开始从mapper类里读它了。"></a>配置完这四条之后，就可以开始从mapper类里读它了。</h3><h3 id="mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里"><a href="#mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里" class="headerlink" title="mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里"></a>mapper框架中有个setup方法，它是负责初始化一些数据，在map前执行，只执行一次，在这里通过setup方法把想拼的信息放进map里</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">  Map&lt;String, String&gt; infomap = new HashMap&lt;String, String&gt;();</div><div class="line">@Override</div><div class="line">protected void setup(Mapper&lt;LongWritable, Text, Text, NullWritable&gt;.Context context)</div><div class="line">		throws IOException, InterruptedException &#123;</div><div class="line">	BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(&quot;market.txt&quot;)));</div><div class="line">    String line;</div><div class="line">	while(StringUtils.isNotEmpty(line=br.readLine()))</div><div class="line">    &#123;</div><div class="line">    	String[] fields=line.split(&quot;\t&quot;);</div><div class="line">    	String tempinfo = fields[0]+&quot;	&quot;+fields[1];</div><div class="line">    	infomap.put(fields[2],tempinfo); 		    	</div><div class="line">    &#125;</div><div class="line">	br.close();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中-通过StringBuffer来读数据"><a href="#把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中-通过StringBuffer来读数据" class="headerlink" title="把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中(通过StringBuffer来读数据)"></a>把信息表中需要拼接的数据先放在tempinfo里面，在通过一个拼接的共有字段来设置key，put到HashMap中(通过StringBuffer来读数据)</h4><h3 id="然后到Map阶段正常切就行，把切出来的共有字段直接map-get出来，拼接输出就行，简单粗暴！"><a href="#然后到Map阶段正常切就行，把切出来的共有字段直接map-get出来，拼接输出就行，简单粗暴！" class="headerlink" title="然后到Map阶段正常切就行，把切出来的共有字段直接map.get出来，拼接输出就行，简单粗暴！"></a>然后到Map阶段正常切就行，把切出来的共有字段直接map.get出来，拼接输出就行，简单粗暴！</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">  protected void map(LongWritable key, Text value, Mapper&lt;LongWritable, Text, Text, NullWritable&gt;.Context context)</div><div class="line">		throws IOException, InterruptedException &#123;</div><div class="line">		Text k = new Text();</div><div class="line">	    String gunline = value.toString();</div><div class="line">	    String[] gun_fields=gunline.split(&quot;\t&quot;);</div><div class="line">	    String info = infomap.get(gun_fields[0]);</div><div class="line">	    k.set(gunline+&quot;	&quot;+info);</div><div class="line">	    context.write(k, NullWritable.get());			  			    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="警醒自己！！！！在所有工作都做完之后一定"><a href="#警醒自己！！！！在所有工作都做完之后一定" class="headerlink" title="警醒自己！！！！在所有工作都做完之后一定"></a>警醒自己！！！！在所有工作都做完之后一定</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">boolean res = job.waitForCompletion(true);</div><div class="line">System.exit(res?0:1);</div></pre></td></tr></table></figure>
+<p>刚才怎么搞都运行不了 就是因为没写这句话！看来job内容不能复制了。越复制越傻，多写几遍为妙！</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-拯救笔记----Partition之电话号码归属地分类" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -358,6 +398,45 @@ context.write(K,V);
 
 
   
+    <article id="post-关于JAVA的一些小记" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/09/25/关于JAVA的一些小记/">关于JAVA的一些小记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/09/25/关于JAVA的一些小记/" class="article-date">
+  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="1-线程调用-run-和-start-的-区别"><a href="#1-线程调用-run-和-start-的-区别" class="headerlink" title="1.线程调用 run 和 start 的 区别"></a>1.线程调用 run 和 start 的 区别</h2><p>调用run方法，其本质就是一个普通方法的调用，不会开启新的线程。</p>
+<p>调用start方法，才会开启一个线程来执行run里面的方法</p>
+<h2 id="2-使用Thread和Runnable的区别"><a href="#2-使用Thread和Runnable的区别" class="headerlink" title="2.使用Thread和Runnable的区别"></a>2.使用Thread和Runnable的区别</h2><p>Thread：先继承Thread，然后通过new来实现类</p>
+<p>Runnable：先继承Runnable，然后new Thread(new 实现类的对象,线程名)</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-Linux安装hadoop前的配置" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -387,45 +466,6 @@ context.write(K,V);
 <h2 id="4-修改hosts文件（重要的一匹！！！！）"><a href="#4-修改hosts文件（重要的一匹！！！！）" class="headerlink" title="4. 修改hosts文件（重要的一匹！！！！）"></a>4. 修改hosts文件（重要的一匹！！！！）</h2><h3 id="vi-etc-hosts"><a href="#vi-etc-hosts" class="headerlink" title="vi /etc/hosts"></a>vi /etc/hosts</h3><p>格式： IP地址  域名</p>
 <h2 id="5-（补充）当域名ping不通外网时候的解决办法"><a href="#5-（补充）当域名ping不通外网时候的解决办法" class="headerlink" title="5.（补充）当域名ping不通外网时候的解决办法"></a>5.（补充）当域名ping不通外网时候的解决办法</h2><h3 id="vi-etc-resolv-conf"><a href="#vi-etc-resolv-conf" class="headerlink" title="vi /etc/resolv.conf"></a>vi /etc/resolv.conf</h3><p>   设置DNS服务器<br>   nameserver 8.8.8.8<br>   nameserver 8.8.4.4</p>
 <h2 id="6-给hadoop新建一个专属用户"><a href="#6-给hadoop新建一个专属用户" class="headerlink" title="6.给hadoop新建一个专属用户"></a>6.给hadoop新建一个专属用户</h2><h3 id="useradd-用户名-passwd-密码"><a href="#useradd-用户名-passwd-密码" class="headerlink" title="useradd 用户名 passwd 密码"></a>useradd 用户名 passwd 密码</h3><h2 id="7-简单两步配置ssh免密登陆"><a href="#7-简单两步配置ssh免密登陆" class="headerlink" title="7.简单两步配置ssh免密登陆"></a>7.简单两步配置ssh免密登陆</h2><h3 id="ssh-keygen（三下回车）"><a href="#ssh-keygen（三下回车）" class="headerlink" title="ssh-keygen（三下回车）"></a>ssh-keygen（三下回车）</h3><h3 id="ssh-copy-id-主机名（输入密码）"><a href="#ssh-copy-id-主机名（输入密码）" class="headerlink" title="ssh-copy-id 主机名（输入密码）"></a>ssh-copy-id 主机名（输入密码）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">接下来就可以感受hadoop了</div></pre></td></tr></table></figure>
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-关于JAVA的一些小记" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/09/25/关于JAVA的一些小记/">关于JAVA的一些小记</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/09/25/关于JAVA的一些小记/" class="article-date">
-  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="1-线程调用-run-和-start-的-区别"><a href="#1-线程调用-run-和-start-的-区别" class="headerlink" title="1.线程调用 run 和 start 的 区别"></a>1.线程调用 run 和 start 的 区别</h2><p>调用run方法，其本质就是一个普通方法的调用，不会开启新的线程。</p>
-<p>调用start方法，才会开启一个线程来执行run里面的方法</p>
-<h2 id="2-使用Thread和Runnable的区别"><a href="#2-使用Thread和Runnable的区别" class="headerlink" title="2.使用Thread和Runnable的区别"></a>2.使用Thread和Runnable的区别</h2><p>Thread：先继承Thread，然后通过new来实现类</p>
-<p>Runnable：先继承Runnable，然后new Thread(new 实现类的对象,线程名)</p>
-
       
 
       
