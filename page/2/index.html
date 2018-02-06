@@ -28,6 +28,54 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-烂大街的题目----找出两个人的共同好友" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/15/烂大街的题目----找出两个人的共同好友/">烂大街的题目----找出两个人的共同好友</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/15/烂大街的题目----找出两个人的共同好友/" class="article-date">
+  <time datetime="2017-12-15T07:06:00.000Z" itemprop="datePublished">2017-12-15</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="关于一个烂大街的题目，有好多写，好多人抄好多人写，我也分析了一套能让未来的我理解的一套方法。"><a href="#关于一个烂大街的题目，有好多写，好多人抄好多人写，我也分析了一套能让未来的我理解的一套方法。" class="headerlink" title="关于一个烂大街的题目，有好多写，好多人抄好多人写，我也分析了一套能让未来的我理解的一套方法。"></a>关于一个烂大街的题目，有好多写，好多人抄好多人写，我也分析了一套能让未来的我理解的一套方法。</h2><h2 id="需求：找出任意两个人的共同好友"><a href="#需求：找出任意两个人的共同好友" class="headerlink" title="需求：找出任意两个人的共同好友"></a>需求：找出任意两个人的共同好友</h2><p>原数据（网上照搬）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">A:B,C,D,F,E,O</div><div class="line">B:A,C,E,K</div><div class="line">C:F,A,D,I</div><div class="line">D:A,E,F,L</div><div class="line">E:B,C,D,M,L</div><div class="line">F:A,B,C,D,E,O,M</div><div class="line">G:A,C,D,E,F</div><div class="line">H:A,C,D,E,O</div><div class="line">I:A,O</div><div class="line">J:B,O</div><div class="line">K:A,C,D</div><div class="line">L:D,E,F</div><div class="line">M:E,F,G</div><div class="line">O:A,H,I,J</div></pre></td></tr></table></figure></p>
+<h2 id="分析：跟那个生成索引一样也分两步！"><a href="#分析：跟那个生成索引一样也分两步！" class="headerlink" title="分析：跟那个生成索引一样也分两步！"></a>分析：跟那个生成索引一样也分两步！</h2><h3 id="第一步"><a href="#第一步" class="headerlink" title="- 第一步"></a>- 第一步</h3><p>一开始只是怎么想怎么一个一个找出共同的好友，但是这样循环太多了，也麻烦。不如第一步就返回来想，找谁和谁的共同好友，那就先按顺序找这个人都在谁的好友里面<br>比如A，A这个人在I、K、C、B、G、F、H、O、D里面 就把 A：I、K、C、B、G、F、H、O、D 输出。好了，先实现第一步</p>
+<h4 id="map阶段"><a href="#map阶段" class="headerlink" title="map阶段"></a>map阶段</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"> static class FMapper extends Mapper&lt;LongWritable, Text, Text, Text&gt;</div><div class="line"> &#123;</div><div class="line">   @Override</div><div class="line">protected void map(LongWritable key, Text value,Context context)</div><div class="line">		throws IOException, InterruptedException &#123;</div><div class="line">       String line = value.toString();</div><div class="line">       String[] fields = line.split(&quot;:&quot;);</div><div class="line">       String person = fields[0];</div><div class="line">       String[] friends = fields[1].split(&quot;,&quot;);</div><div class="line">       for(String friend:friends)</div><div class="line">       &#123;</div><div class="line">    	   context.write(new Text(friend), new Text(person));</div><div class="line">       &#125;</div><div class="line">&#125;  </div><div class="line"> &#125;</div></pre></td></tr></table></figure>
+<p>map阶段除了切分以外，还需要一个循环来输出，也就是把每个&lt;好友,人&gt;都输出。这样一样的‘好友’就有一样‘好友’下面的所有人了<br>比如：它们在shuffle里面就是<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&lt;B,A&gt; &lt;C,A&gt; &lt;D,A&gt; &lt;F,A&gt; &lt;E,A&gt; ....</div><div class="line">&lt;A,B&gt; &lt;C,B&gt; &lt;E,B&gt; &lt;K,B&gt;  ....</div><div class="line">&lt;F,C&gt; &lt;A,C&gt; &lt;D,C&gt; &lt;I,C&gt;  .....</div></pre></td></tr></table></figure></p>
+<p>这样一来，C这个人分别在A和B中已经找出来了。</p>
+<h4 id="reduce阶段"><a href="#reduce阶段" class="headerlink" title="reduce阶段"></a>reduce阶段</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">static class FReducer extends Reducer&lt;Text, Text, Text, Text&gt;</div><div class="line">   &#123;</div><div class="line">           @Override</div><div class="line"> 	    protected void reduce(Text key, Iterable&lt;Text&gt; value,</div><div class="line"> 	    		Reducer&lt;Text, Text, Text, Text&gt;.Context context)</div><div class="line"> 	    		throws IOException, InterruptedException &#123;</div><div class="line"> 	        StringBuffer sb = new StringBuffer();</div><div class="line"> 	        for(Text person:value)</div><div class="line"> 	        &#123;</div><div class="line"> 	        	sb.append(person.toString()).append(&quot;	&quot;);;</div><div class="line"> 	        &#125;</div><div class="line"> 	    		context.write(key, new Text(sb.toString()));</div><div class="line"> 	    &#125;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>reduce阶段没什么好解释的。。就是用StringBuffer拼接成一个串输出而已。</p>
+<h3 id="第二步"><a href="#第二步" class="headerlink" title="-第二步"></a>-第二步</h3><p>第一步已经找出来了谁在谁的好友列表里面，像这样<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">A:I	K	C	B	G	F	H	O	D	</div><div class="line">B:A	F	J	E	</div><div class="line">C:A	E	B	H	F	G	K	</div><div class="line">D:G	C	K	A	L	F	E	H	</div><div class="line">E:G	M	L	H	A	F	B	D	</div><div class="line">F:L	M	D	C	G	A	</div><div class="line">G:M	</div><div class="line">H:O	</div><div class="line">I:O	C	</div><div class="line">J:O	</div><div class="line">K:B	</div><div class="line">L:D	E	</div><div class="line">M:E	F	</div><div class="line">O:A	H	I	J	F</div></pre></td></tr></table></figure></p>
+<p>只要把冒号后面的人两两一起当作key，把好友当作value再发就行了。用一个两层for循环来解决这个问题</p>
+<h4 id="map阶段-1"><a href="#map阶段-1" class="headerlink" title="map阶段"></a>map阶段</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"> static class FMapperT extends Mapper&lt;LongWritable, Text, Text, Text&gt;</div><div class="line"> &#123;</div><div class="line">   @Override</div><div class="line">protected void map(LongWritable key, Text value,Context context)</div><div class="line">		throws IOException, InterruptedException &#123;</div><div class="line">	  FileSplit fl = (FileSplit) context.getInputSplit();</div><div class="line">	  String filename = fl.getPath().getName();</div><div class="line">	  if(filename.startsWith(&quot;part&quot;)) </div><div class="line">	  &#123;</div><div class="line">       String line = value.toString();</div><div class="line">       String[] fields = line.split(&quot;	&quot;);</div><div class="line">       for(int i=1;i&lt;fields.length;i++)</div><div class="line">       &#123;</div><div class="line">    	 for(int j=i+1;j&lt;fields.length;j++)</div><div class="line">    	 &#123;</div><div class="line">    		 context.write(new Text(fields[i]+fields[j]), new Text(fields[0]));</div><div class="line">    	 &#125;</div><div class="line">       &#125;</div><div class="line">	  &#125;else &#123;</div><div class="line">		  System.exit(1);</div><div class="line">	  &#125;</div><div class="line">		  </div><div class="line">&#125;  </div><div class="line"> &#125;</div></pre></td></tr></table></figure>
+<p>五、六行代码我是直接把上一步的目录当作下一个的输入目录所以做个文件名匹配，<br>然后切分出来双重for循环拼一起就好了！</p>
+<h4 id="Reduce阶段同第一步。。就是利用StringBuffer让它们变成一个串！"><a href="#Reduce阶段同第一步。。就是利用StringBuffer让它们变成一个串！" class="headerlink" title="Reduce阶段同第一步。。就是利用StringBuffer让它们变成一个串！"></a>Reduce阶段同第一步。。就是利用StringBuffer让它们变成一个串！</h4><p>最后输出结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div></pre></td><td class="code"><pre><div class="line">AB  E,C,</div><div class="line">AD	E,</div><div class="line">AE	D,C,B,</div><div class="line">AF	C,D,B,O,E,</div><div class="line">AG	C,</div><div class="line">AH	D,O,C,</div><div class="line">AI	O,</div><div class="line">AJ	O,B,</div><div class="line">AK	C,</div><div class="line">AL	D,</div><div class="line">BD	E,A,</div><div class="line">BF	C,A,</div><div class="line">BG	C,A,</div><div class="line">BH	C,A,</div><div class="line">BK	C,</div><div class="line">BO	A,</div><div class="line">CA	D,F,</div><div class="line">CB	A,</div><div class="line">CD	A,</div><div class="line">CE	D,</div><div class="line">CF	D,A,</div><div class="line">CG	F,A,</div><div class="line">CH	A,D,</div><div class="line">CK	D,</div><div class="line">CL	D,</div><div class="line">CO	A,</div><div class="line">DA	F,</div><div class="line">DC	F,</div><div class="line">DE	L,</div><div class="line">DG	F,</div><div class="line">EB	C,</div><div class="line">EF	M,C,</div><div class="line">EG	C,</div><div class="line">EH	C,D,</div><div class="line">EK	C,</div><div class="line">FB	E,</div><div class="line">FD	E,A,</div><div class="line">FE	B,D,</div><div class="line">FG	C,</div><div class="line">FH	D,A,</div><div class="line">FJ	B,</div><div class="line">FK	C,</div><div class="line">FO	A,</div><div class="line">GA	E,D,F,</div><div class="line">GB	E,</div><div class="line">GC	D,</div><div class="line">GD	E,A,</div><div class="line">GE	D,</div><div class="line">GF	D,E,A,</div><div class="line">GH	E,A,D,</div><div class="line">GK	D,C,</div><div class="line">GL	D,E,</div><div class="line">GM	E,</div><div class="line">GO	A,</div><div class="line">HA	E,</div><div class="line">HB	E,</div><div class="line">HD	A,E,</div><div class="line">HF	C,E,O,</div><div class="line">HG	C,</div><div class="line">HI	O,</div><div class="line">HJ	O,</div><div class="line">HK	C,</div><div class="line">HO	A,</div><div class="line">IB	A,</div><div class="line">IC	A,</div><div class="line">ID	A,</div><div class="line">IF	A,O,</div><div class="line">IG	A,</div><div class="line">IH	A,</div><div class="line">IJ	O,</div><div class="line">IK	A,</div><div class="line">IO	A,</div><div class="line">JE	B,</div><div class="line">JF	O,</div><div class="line">KA	D,</div><div class="line">KB	A,</div><div class="line">KC	A,</div><div class="line">KD	A,</div><div class="line">KE	D,</div><div class="line">KF	D,A,</div><div class="line">KG	A,</div><div class="line">KH	D,A,</div><div class="line">KL	D,</div><div class="line">KO	A,</div><div class="line">LA	F,E,</div><div class="line">LB	E,</div><div class="line">LC	F,</div><div class="line">LD	E,F,</div><div class="line">LE	D,</div><div class="line">LF	E,D,</div><div class="line">LG	F,</div><div class="line">LH	E,D,</div><div class="line">LM	F,</div><div class="line">MA	F,E,</div><div class="line">MB	E,</div><div class="line">MC	F,</div><div class="line">MD	F,E,</div><div class="line">MF	E,</div><div class="line">MG	F,</div><div class="line">MH	E,</div><div class="line">ML	E,</div><div class="line">OC	I,</div><div class="line">OD	A,</div></pre></td></tr></table></figure></p>
+<p>就这样！未来的我。你看懂了吗？</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-拯救笔记----解决恼人的数据倾斜" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -298,6 +346,47 @@ context.write(K,V);
 
 
   
+    <article id="post-Linux安装hadoop前的配置" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/09/25/Linux安装hadoop前的配置/">Linux安装hadoop前的配置</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/09/25/Linux安装hadoop前的配置/" class="article-date">
+  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="基本几步搞定linux配置"><a href="#基本几步搞定linux配置" class="headerlink" title="基本几步搞定linux配置"></a>基本几步搞定linux配置</h1><h2 id="自己看视频总结的。。"><a href="#自己看视频总结的。。" class="headerlink" title="自己看视频总结的。。"></a>自己看视频总结的。。</h2><p>在centos用minimal安装成功后..先干这几步</p>
+<h2 id="1-修改网卡的基本配置"><a href="#1-修改网卡的基本配置" class="headerlink" title="1. 修改网卡的基本配置"></a>1. 修改网卡的基本配置</h2><h3 id="vi-etc-sysconfig-network-scripts-ifcfg-etho"><a href="#vi-etc-sysconfig-network-scripts-ifcfg-etho" class="headerlink" title="vi /etc/sysconfig/network-scripts/ifcfg-etho"></a>vi /etc/sysconfig/network-scripts/ifcfg-etho</h3><p>DEVICE=eth0 （网卡的物理位置）<br>ONBOOT=yes（默认加载项）<br>BOOTPROTO=static（设置成静态网卡）<br>IPADDR=设置的ip地址（不用解释了吧）</p>
+<h2 id="2-修改网卡的全局配置"><a href="#2-修改网卡的全局配置" class="headerlink" title="2. 修改网卡的全局配置"></a>2. 修改网卡的全局配置</h2><h3 id="vi-etc-sysconfig-network"><a href="#vi-etc-sysconfig-network" class="headerlink" title="vi /etc/sysconfig/network"></a>vi /etc/sysconfig/network</h3><p>NETWORKING=yes<br>HOSTNAME=主机名（全局主机名，用于区分集群的机器，以及配置hosts）<br>GATEWAY=网关（网关地址，如果是虚拟机就看虚拟网络配置中的网关）</p>
+<h2 id="3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"><a href="#3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）" class="headerlink" title="3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"></a>3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）</h2><h3 id="vi-etc-udev-rules-d-70-persistent-net-rules"><a href="#vi-etc-udev-rules-d-70-persistent-net-rules" class="headerlink" title="vi /etc/udev/rules.d/70-persistent-net.rules"></a>vi /etc/udev/rules.d/70-persistent-net.rules</h3><p>删除原eth0，把eth1改成eth0</p>
+<h2 id="4-修改hosts文件（重要的一匹！！！！）"><a href="#4-修改hosts文件（重要的一匹！！！！）" class="headerlink" title="4. 修改hosts文件（重要的一匹！！！！）"></a>4. 修改hosts文件（重要的一匹！！！！）</h2><h3 id="vi-etc-hosts"><a href="#vi-etc-hosts" class="headerlink" title="vi /etc/hosts"></a>vi /etc/hosts</h3><p>格式： IP地址  域名</p>
+<h2 id="5-（补充）当域名ping不通外网时候的解决办法"><a href="#5-（补充）当域名ping不通外网时候的解决办法" class="headerlink" title="5.（补充）当域名ping不通外网时候的解决办法"></a>5.（补充）当域名ping不通外网时候的解决办法</h2><h3 id="vi-etc-resolv-conf"><a href="#vi-etc-resolv-conf" class="headerlink" title="vi /etc/resolv.conf"></a>vi /etc/resolv.conf</h3><p>   设置DNS服务器<br>   nameserver 8.8.8.8<br>   nameserver 8.8.4.4</p>
+<h2 id="6-给hadoop新建一个专属用户"><a href="#6-给hadoop新建一个专属用户" class="headerlink" title="6.给hadoop新建一个专属用户"></a>6.给hadoop新建一个专属用户</h2><h3 id="useradd-用户名-passwd-密码"><a href="#useradd-用户名-passwd-密码" class="headerlink" title="useradd 用户名 passwd 密码"></a>useradd 用户名 passwd 密码</h3><h2 id="7-简单两步配置ssh免密登陆"><a href="#7-简单两步配置ssh免密登陆" class="headerlink" title="7.简单两步配置ssh免密登陆"></a>7.简单两步配置ssh免密登陆</h2><h3 id="ssh-keygen（三下回车）"><a href="#ssh-keygen（三下回车）" class="headerlink" title="ssh-keygen（三下回车）"></a>ssh-keygen（三下回车）</h3><h3 id="ssh-copy-id-主机名（输入密码）"><a href="#ssh-copy-id-主机名（输入密码）" class="headerlink" title="ssh-copy-id 主机名（输入密码）"></a>ssh-copy-id 主机名（输入密码）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">接下来就可以感受hadoop了</div></pre></td></tr></table></figure>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-正式安装hadoop" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -425,47 +514,6 @@ context.write(K,V);
 <h2 id="2-使用Thread和Runnable的区别"><a href="#2-使用Thread和Runnable的区别" class="headerlink" title="2.使用Thread和Runnable的区别"></a>2.使用Thread和Runnable的区别</h2><p>Thread：先继承Thread，然后通过new来实现类</p>
 <p>Runnable：先继承Runnable，然后new Thread(new 实现类的对象,线程名)</p>
 
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-Linux安装hadoop前的配置" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/09/25/Linux安装hadoop前的配置/">Linux安装hadoop前的配置</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/09/25/Linux安装hadoop前的配置/" class="article-date">
-  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="基本几步搞定linux配置"><a href="#基本几步搞定linux配置" class="headerlink" title="基本几步搞定linux配置"></a>基本几步搞定linux配置</h1><h2 id="自己看视频总结的。。"><a href="#自己看视频总结的。。" class="headerlink" title="自己看视频总结的。。"></a>自己看视频总结的。。</h2><p>在centos用minimal安装成功后..先干这几步</p>
-<h2 id="1-修改网卡的基本配置"><a href="#1-修改网卡的基本配置" class="headerlink" title="1. 修改网卡的基本配置"></a>1. 修改网卡的基本配置</h2><h3 id="vi-etc-sysconfig-network-scripts-ifcfg-etho"><a href="#vi-etc-sysconfig-network-scripts-ifcfg-etho" class="headerlink" title="vi /etc/sysconfig/network-scripts/ifcfg-etho"></a>vi /etc/sysconfig/network-scripts/ifcfg-etho</h3><p>DEVICE=eth0 （网卡的物理位置）<br>ONBOOT=yes（默认加载项）<br>BOOTPROTO=static（设置成静态网卡）<br>IPADDR=设置的ip地址（不用解释了吧）</p>
-<h2 id="2-修改网卡的全局配置"><a href="#2-修改网卡的全局配置" class="headerlink" title="2. 修改网卡的全局配置"></a>2. 修改网卡的全局配置</h2><h3 id="vi-etc-sysconfig-network"><a href="#vi-etc-sysconfig-network" class="headerlink" title="vi /etc/sysconfig/network"></a>vi /etc/sysconfig/network</h3><p>NETWORKING=yes<br>HOSTNAME=主机名（全局主机名，用于区分集群的机器，以及配置hosts）<br>GATEWAY=网关（网关地址，如果是虚拟机就看虚拟网络配置中的网关）</p>
-<h2 id="3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"><a href="#3-删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）" class="headerlink" title="3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）"></a>3. 删除克隆机相同的网卡（如果不是虚拟克隆机可以略过）</h2><h3 id="vi-etc-udev-rules-d-70-persistent-net-rules"><a href="#vi-etc-udev-rules-d-70-persistent-net-rules" class="headerlink" title="vi /etc/udev/rules.d/70-persistent-net.rules"></a>vi /etc/udev/rules.d/70-persistent-net.rules</h3><p>删除原eth0，把eth1改成eth0</p>
-<h2 id="4-修改hosts文件（重要的一匹！！！！）"><a href="#4-修改hosts文件（重要的一匹！！！！）" class="headerlink" title="4. 修改hosts文件（重要的一匹！！！！）"></a>4. 修改hosts文件（重要的一匹！！！！）</h2><h3 id="vi-etc-hosts"><a href="#vi-etc-hosts" class="headerlink" title="vi /etc/hosts"></a>vi /etc/hosts</h3><p>格式： IP地址  域名</p>
-<h2 id="5-（补充）当域名ping不通外网时候的解决办法"><a href="#5-（补充）当域名ping不通外网时候的解决办法" class="headerlink" title="5.（补充）当域名ping不通外网时候的解决办法"></a>5.（补充）当域名ping不通外网时候的解决办法</h2><h3 id="vi-etc-resolv-conf"><a href="#vi-etc-resolv-conf" class="headerlink" title="vi /etc/resolv.conf"></a>vi /etc/resolv.conf</h3><p>   设置DNS服务器<br>   nameserver 8.8.8.8<br>   nameserver 8.8.4.4</p>
-<h2 id="6-给hadoop新建一个专属用户"><a href="#6-给hadoop新建一个专属用户" class="headerlink" title="6.给hadoop新建一个专属用户"></a>6.给hadoop新建一个专属用户</h2><h3 id="useradd-用户名-passwd-密码"><a href="#useradd-用户名-passwd-密码" class="headerlink" title="useradd 用户名 passwd 密码"></a>useradd 用户名 passwd 密码</h3><h2 id="7-简单两步配置ssh免密登陆"><a href="#7-简单两步配置ssh免密登陆" class="headerlink" title="7.简单两步配置ssh免密登陆"></a>7.简单两步配置ssh免密登陆</h2><h3 id="ssh-keygen（三下回车）"><a href="#ssh-keygen（三下回车）" class="headerlink" title="ssh-keygen（三下回车）"></a>ssh-keygen（三下回车）</h3><h3 id="ssh-copy-id-主机名（输入密码）"><a href="#ssh-copy-id-主机名（输入密码）" class="headerlink" title="ssh-copy-id 主机名（输入密码）"></a>ssh-copy-id 主机名（输入密码）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">接下来就可以感受hadoop了</div></pre></td></tr></table></figure>
       
 
       
