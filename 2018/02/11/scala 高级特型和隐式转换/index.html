@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>scala 高级特型和隐式转换 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="1.高阶函数作为值的函数123val func=(x: Int) =&amp;gt; x*xarr=Array(1,2,3,4,5)arr.map(func) 方法也可以作为值传入方法中 此时隐式的将方法转换成了函数2.柯里化###可以接收多个参数，多个参数在多个括号里 ###然后将原来接受两个参数的方法变成新的接受一个参数的方法的过程 3.隐式转换 (关键字： implicit) 定义在柯里化方法中的i">
+<meta name="keywords" content="scala">
+<meta property="og:type" content="article">
+<meta property="og:title" content="scala 高级特型和隐式转换">
+<meta property="og:url" content="http://yoursite.com/2018/02/11/scala 高级特型和隐式转换/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="1.高阶函数作为值的函数123val func=(x: Int) =&amp;gt; x*xarr=Array(1,2,3,4,5)arr.map(func) 方法也可以作为值传入方法中 此时隐式的将方法转换成了函数2.柯里化###可以接收多个参数，多个参数在多个括号里 ###然后将原来接受两个参数的方法变成新的接受一个参数的方法的过程 3.隐式转换 (关键字： implicit) 定义在柯里化方法中的i">
+<meta property="og:updated_time" content="2018-02-11T15:23:24.796Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="scala 高级特型和隐式转换">
+<meta name="twitter:description" content="1.高阶函数作为值的函数123val func=(x: Int) =&amp;gt; x*xarr=Array(1,2,3,4,5)arr.map(func) 方法也可以作为值传入方法中 此时隐式的将方法转换成了函数2.柯里化###可以接收多个参数，多个参数在多个括号里 ###然后将原来接受两个参数的方法变成新的接受一个参数的方法的过程 3.隐式转换 (关键字： implicit) 定义在柯里化方法中的i">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-scala 高级特型和隐式转换" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      scala 高级特型和隐式转换
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/11/scala 高级特型和隐式转换/" class="article-date">
+  <time datetime="2018-02-11T15:22:00.000Z" itemprop="datePublished">2018-02-11</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="1-高阶函数"><a href="#1-高阶函数" class="headerlink" title="1.高阶函数"></a>1.高阶函数</h2><h3 id="作为值的函数"><a href="#作为值的函数" class="headerlink" title="作为值的函数"></a>作为值的函数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">val func=(x: Int) =&gt; x*x</div><div class="line">arr=Array(1,2,3,4,5)</div><div class="line">arr.map(func)</div></pre></td></tr></table></figure>
+<h4 id="方法也可以作为值传入方法中-此时隐式的将方法转换成了函数"><a href="#方法也可以作为值传入方法中-此时隐式的将方法转换成了函数" class="headerlink" title="方法也可以作为值传入方法中 此时隐式的将方法转换成了函数"></a>方法也可以作为值传入方法中 此时隐式的将方法转换成了函数</h4><h2 id="2-柯里化"><a href="#2-柯里化" class="headerlink" title="2.柯里化"></a>2.柯里化</h2><p>###可以接收多个参数，多个参数在多个括号里</p>
+<p>###然后将原来接受两个参数的方法变成新的接受一个参数的方法的过程</p>
+<h2 id="3-隐式转换-关键字：-implicit"><a href="#3-隐式转换-关键字：-implicit" class="headerlink" title="3.隐式转换 (关键字： implicit)"></a>3.隐式转换 (关键字： implicit)</h2><ul>
+<li>定义在柯里化方法中的implicit修饰的变量</li>
+<li>可以引用其他object中implicit修饰的变量</li>
+<li>在调用其方法之前    import   里面有implicit修饰的object</li>
+<li>含有implicit修饰的object，一定要写在调用其的object前面<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">object Value&#123;</div><div class="line">  implicit val name = &quot;haihan&quot;</div><div class="line">&#125;</div><div class="line">object implictDemo extends App &#123;</div><div class="line">    def say(a: Int)(implicit name: String = &quot;gy&quot;)=&#123;</div><div class="line">         println(s&quot;$name   $a&quot;)</div><div class="line">    &#125;</div><div class="line">  import Value.name</div><div class="line">  say(13)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="3-scala的泛型表达方式"><a href="#3-scala的泛型表达方式" class="headerlink" title="3.scala的泛型表达方式"></a>3.scala的泛型表达方式</h2><h3 id="T-lt-上界"><a href="#T-lt-上界" class="headerlink" title="[T &lt;: 上界]"></a>[T &lt;: 上界]</h3><h3 id="T-gt-下界"><a href="#T-gt-下界" class="headerlink" title="[T &gt;: 下界]"></a>[T &gt;: 下界]</h3><h3 id="T-lt-视图定界-它必须传进去一个隐式转换的函数-相当于柯里化中的第二个括号中的隐式函数"><a href="#T-lt-视图定界-它必须传进去一个隐式转换的函数-相当于柯里化中的第二个括号中的隐式函数" class="headerlink" title="[T &lt;% 视图定界] 它必须传进去一个隐式转换的函数,相当于柯里化中的第二个括号中的隐式函数"></a>[T &lt;% 视图定界] 它必须传进去一个隐式转换的函数,相当于柯里化中的第二个括号中的隐式函数</h3><h3 id="T-上下文界定-它必须传一个隐式转换的值-相当于传一个变量-通过变量的类型来进行规则"><a href="#T-上下文界定-它必须传一个隐式转换的值-相当于传一个变量-通过变量的类型来进行规则" class="headerlink" title="[T : 上下文界定] 它必须传一个隐式转换的值,相当于传一个变量 通过变量的类型来进行规则"></a>[T : 上下文界定] 它必须传一个隐式转换的值,相当于传一个变量 通过变量的类型来进行规则</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/02/07/Spark的几个高级算子/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Spark的几个高级算子</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2018 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
