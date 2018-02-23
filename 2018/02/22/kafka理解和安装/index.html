@@ -5,17 +5,17 @@
   
   <title>kafka理解和安装 | M78星云档案库</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="#kafka是一个缓存数据的系统。 (Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)###kafka是一个分布式的消息缓存系统。由Scala写成。 ###一个生产者消费者模型。类似与JMS的特性    #kafka基本理解  类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产">
+  <meta name="description" content="kafka是一个缓存数据的系统。(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)kafka是一个分布式的消息缓存系统。由Scala写成。一个生产者消费者模型。类似与JMS的特性 kafka基本理解 类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产者的代码可以集成到任何系统中">
 <meta name="keywords" content="kafka">
 <meta property="og:type" content="article">
 <meta property="og:title" content="kafka理解和安装">
 <meta property="og:url" content="http://yoursite.com/2018/02/22/kafka理解和安装/index.html">
 <meta property="og:site_name" content="M78星云档案库">
-<meta property="og:description" content="#kafka是一个缓存数据的系统。 (Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)###kafka是一个分布式的消息缓存系统。由Scala写成。 ###一个生产者消费者模型。类似与JMS的特性    #kafka基本理解  类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产">
-<meta property="og:updated_time" content="2018-02-22T14:39:37.118Z">
+<meta property="og:description" content="kafka是一个缓存数据的系统。(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)kafka是一个分布式的消息缓存系统。由Scala写成。一个生产者消费者模型。类似与JMS的特性 kafka基本理解 类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产者的代码可以集成到任何系统中">
+<meta property="og:updated_time" content="2018-02-23T15:26:58.150Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="kafka理解和安装">
-<meta name="twitter:description" content="#kafka是一个缓存数据的系统。 (Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)###kafka是一个分布式的消息缓存系统。由Scala写成。 ###一个生产者消费者模型。类似与JMS的特性    #kafka基本理解  类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产">
+<meta name="twitter:description" content="kafka是一个缓存数据的系统。(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)kafka是一个分布式的消息缓存系统。由Scala写成。一个生产者消费者模型。类似与JMS的特性 kafka基本理解 类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产者的代码可以集成到任何系统中">
   
     <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
   
@@ -53,12 +53,8 @@
     </div>
     <div class="article-entry" itemprop="articleBody">
       
-        <p>#kafka是一个缓存数据的系统。</p>
-<h2 id="Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算"><a href="#Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算" class="headerlink" title="(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)"></a>(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)</h2><p>###kafka是一个分布式的消息缓存系统。由Scala写成。</p>
-<p>###一个生产者消费者模型。类似与JMS的特性  </p>
-<hr>
-<p>#kafka基本理解</p>
-<ol>
+        <h1 id="kafka是一个缓存数据的系统。"><a href="#kafka是一个缓存数据的系统。" class="headerlink" title="kafka是一个缓存数据的系统。"></a>kafka是一个缓存数据的系统。</h1><h2 id="Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算"><a href="#Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算" class="headerlink" title="(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)"></a>(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)</h2><h3 id="kafka是一个分布式的消息缓存系统。由Scala写成。"><a href="#kafka是一个分布式的消息缓存系统。由Scala写成。" class="headerlink" title="kafka是一个分布式的消息缓存系统。由Scala写成。"></a>kafka是一个分布式的消息缓存系统。由Scala写成。</h3><h3 id="一个生产者消费者模型。类似与JMS的特性"><a href="#一个生产者消费者模型。类似与JMS的特性" class="headerlink" title="一个生产者消费者模型。类似与JMS的特性"></a>一个生产者消费者模型。类似与JMS的特性</h3><hr>
+<h1 id="kafka基本理解"><a href="#kafka基本理解" class="headerlink" title="kafka基本理解"></a>kafka基本理解</h1><ol>
 <li>类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。</li>
 <li>数据生产者messageProducer：只负责数据生产，生产者的代码可以集成到任何系统中。<pre><code>数据分发策略由producer决定。默认是defaultPartition Utils.abs(key.hashCode)%numPartitions
 </code></pre></li>
@@ -71,23 +67,19 @@
 <li>数据的分片分组：Partition，有多个，不同机器上有不同的机器的副本。数据生产到集群中的那一个parttion由生产者决定（Key的Hash算法）<br>每个parttiion是一个大文件 切割成小文件存在集群中</li>
 </ol>
 <p>一个组中的数据最好和分片数对应，一个分片对应一个组中的消费成员<br>如果组中的成员太多，必然会有成员空闲。</p>
-<p>##partition数量和broker数量关系</p>
-<p>###每个parttion数据如何保存到硬盘</p>
-<p>###面试题:如何保证消费者消费的数据是有序的</p>
-<ol>
+<h2 id="partition数量和broker数量关系"><a href="#partition数量和broker数量关系" class="headerlink" title="partition数量和broker数量关系"></a>partition数量和broker数量关系</h2><h3 id="每个parttion数据如何保存到硬盘"><a href="#每个parttion数据如何保存到硬盘" class="headerlink" title="每个parttion数据如何保存到硬盘"></a>每个parttion数据如何保存到硬盘</h3><h3 id="面试题-如何保证消费者消费的数据是有序的"><a href="#面试题-如何保证消费者消费的数据是有序的" class="headerlink" title="面试题:如何保证消费者消费的数据是有序的"></a>面试题:如何保证消费者消费的数据是有序的</h3><ol>
 <li>生产者集群模式有序号管理器</li>
 <li>blocker端只设置一个partition</li>
 <li>consumer如果是一个组，如何保证消费者有序—&gt;消费者线程里自定义一个数据结构来排序<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">一个partition的数据是间断性有序的，不连续</div><div class="line">针对一个tipic里的数据，只能做到partition内部有序，不能做到全局有序</div><div class="line">只有一种情况---&gt; 就是只有一个partition</div><div class="line">考虑kafka并发下的负载均衡</div></pre></td></tr></table></figure>
 </li>
 </ol>
-<p>###Kafka集群结构</p>
-<ol>
+<h3 id="Kafka集群结构"><a href="#Kafka集群结构" class="headerlink" title="Kafka集群结构"></a>Kafka集群结构</h3><ol>
 <li>kafka集群的服务器都叫broker。kafka有两类客户端（messageProducer、messageConsumer)</li>
 <li>客户端和服务器之间采用TCP服务器连接</li>
 <li>kafka中不同的业务的消息通过topic进行区分。而且每一个消息topic都会被分区，以分担消息读写的负载</li>
 <li>每一个分区都可以有多个副本，以防止数据的丢失。每一个分区中的数据如果需要更新都必须通过该分区所有副本中的leader来更新！</li>
 </ol>
-<p>###Kafka在消费者中标记信息<br>kafka消费者在集群中分组，</p>
+<h3 id="Kafka在消费者中标记信息"><a href="#Kafka在消费者中标记信息" class="headerlink" title="Kafka在消费者中标记信息"></a>Kafka在消费者中标记信息</h3><p>kafka消费者在集群中分组，</p>
 <ul>
 <li><p>比如两个消费者共同消费一个topic：order_info，A和B所消费的消息不会重复<br>比如 order_inf中有100条消息，每个消息id，编号从0-99 消费者A消费0-49 消费者B就消耗50-99</p>
 </li>

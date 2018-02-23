@@ -89,12 +89,8 @@ key是在发送数据时传入的（proder.send（Keyedmessage（topic，myParti
     </div>
     <div class="article-entry" itemprop="articleBody">
       
-        <p>#kafka是一个缓存数据的系统。</p>
-<h2 id="Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算"><a href="#Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算" class="headerlink" title="(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)"></a>(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)</h2><p>###kafka是一个分布式的消息缓存系统。由Scala写成。</p>
-<p>###一个生产者消费者模型。类似与JMS的特性  </p>
-<hr>
-<p>#kafka基本理解</p>
-<ol>
+        <h1 id="kafka是一个缓存数据的系统。"><a href="#kafka是一个缓存数据的系统。" class="headerlink" title="kafka是一个缓存数据的系统。"></a>kafka是一个缓存数据的系统。</h1><h2 id="Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算"><a href="#Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算" class="headerlink" title="(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)"></a>(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)</h2><h3 id="kafka是一个分布式的消息缓存系统。由Scala写成。"><a href="#kafka是一个分布式的消息缓存系统。由Scala写成。" class="headerlink" title="kafka是一个分布式的消息缓存系统。由Scala写成。"></a>kafka是一个分布式的消息缓存系统。由Scala写成。</h3><h3 id="一个生产者消费者模型。类似与JMS的特性"><a href="#一个生产者消费者模型。类似与JMS的特性" class="headerlink" title="一个生产者消费者模型。类似与JMS的特性"></a>一个生产者消费者模型。类似与JMS的特性</h3><hr>
+<h1 id="kafka基本理解"><a href="#kafka基本理解" class="headerlink" title="kafka基本理解"></a>kafka基本理解</h1><ol>
 <li>类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。</li>
 <li>数据生产者messageProducer：只负责数据生产，生产者的代码可以集成到任何系统中。<pre><code>数据分发策略由producer决定。默认是defaultPartition Utils.abs(key.hashCode)%numPartitions
 </code></pre></li>
@@ -107,23 +103,19 @@ key是在发送数据时传入的（proder.send（Keyedmessage（topic，myParti
 <li>数据的分片分组：Partition，有多个，不同机器上有不同的机器的副本。数据生产到集群中的那一个parttion由生产者决定（Key的Hash算法）<br>每个parttiion是一个大文件 切割成小文件存在集群中</li>
 </ol>
 <p>一个组中的数据最好和分片数对应，一个分片对应一个组中的消费成员<br>如果组中的成员太多，必然会有成员空闲。</p>
-<p>##partition数量和broker数量关系</p>
-<p>###每个parttion数据如何保存到硬盘</p>
-<p>###面试题:如何保证消费者消费的数据是有序的</p>
-<ol>
+<h2 id="partition数量和broker数量关系"><a href="#partition数量和broker数量关系" class="headerlink" title="partition数量和broker数量关系"></a>partition数量和broker数量关系</h2><h3 id="每个parttion数据如何保存到硬盘"><a href="#每个parttion数据如何保存到硬盘" class="headerlink" title="每个parttion数据如何保存到硬盘"></a>每个parttion数据如何保存到硬盘</h3><h3 id="面试题-如何保证消费者消费的数据是有序的"><a href="#面试题-如何保证消费者消费的数据是有序的" class="headerlink" title="面试题:如何保证消费者消费的数据是有序的"></a>面试题:如何保证消费者消费的数据是有序的</h3><ol>
 <li>生产者集群模式有序号管理器</li>
 <li>blocker端只设置一个partition</li>
 <li>consumer如果是一个组，如何保证消费者有序—&gt;消费者线程里自定义一个数据结构来排序<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">一个partition的数据是间断性有序的，不连续</div><div class="line">针对一个tipic里的数据，只能做到partition内部有序，不能做到全局有序</div><div class="line">只有一种情况---&gt; 就是只有一个partition</div><div class="line">考虑kafka并发下的负载均衡</div></pre></td></tr></table></figure>
 </li>
 </ol>
-<p>###Kafka集群结构</p>
-<ol>
+<h3 id="Kafka集群结构"><a href="#Kafka集群结构" class="headerlink" title="Kafka集群结构"></a>Kafka集群结构</h3><ol>
 <li>kafka集群的服务器都叫broker。kafka有两类客户端（messageProducer、messageConsumer)</li>
 <li>客户端和服务器之间采用TCP服务器连接</li>
 <li>kafka中不同的业务的消息通过topic进行区分。而且每一个消息topic都会被分区，以分担消息读写的负载</li>
 <li>每一个分区都可以有多个副本，以防止数据的丢失。每一个分区中的数据如果需要更新都必须通过该分区所有副本中的leader来更新！</li>
 </ol>
-<p>###Kafka在消费者中标记信息<br>kafka消费者在集群中分组，</p>
+<h3 id="Kafka在消费者中标记信息"><a href="#Kafka在消费者中标记信息" class="headerlink" title="Kafka在消费者中标记信息"></a>Kafka在消费者中标记信息</h3><p>kafka消费者在集群中分组，</p>
 <ul>
 <li><p>比如两个消费者共同消费一个topic：order_info，A和B所消费的消息不会重复<br>比如 order_inf中有100条消息，每个消息id，编号从0-99 消费者A消费0-49 消费者B就消耗50-99</p>
 </li>
@@ -320,10 +312,9 @@ key是在发送数据时传入的（proder.send（Keyedmessage（topic，myParti
       
         <h2 id="Storm的几个重要概念："><a href="#Storm的几个重要概念：" class="headerlink" title="Storm的几个重要概念："></a>Storm的几个重要概念：</h2><h3 id="1-Datasource：外部数据源"><a href="#1-Datasource：外部数据源" class="headerlink" title="1. Datasource：外部数据源"></a>1. Datasource：外部数据源</h3><h3 id="2-Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt"><a href="#2-Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt" class="headerlink" title="2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt"></a>2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt</h3><h3 id="3-Bolt：接收Spout-或上游的bolt发送的数据-发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上"><a href="#3-Bolt：接收Spout-或上游的bolt发送的数据-发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上" class="headerlink" title="3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上"></a>3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上</h3><h3 id="4-Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据"><a href="#4-Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据" class="headerlink" title="4. Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据"></a>4. Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据</h3><h3 id="5-StreamGrouping：数据分组策略（hadoop中的hashcode-num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区"><a href="#5-StreamGrouping：数据分组策略（hadoop中的hashcode-num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区" class="headerlink" title="5. StreamGrouping：数据分组策略（hadoop中的hashcode%num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区"></a>5. StreamGrouping：数据分组策略（hadoop中的hashcode%num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区</h3><hr>
 <h2 id="常用几种StreamGrouping（一共七种）："><a href="#常用几种StreamGrouping（一共七种）：" class="headerlink" title="常用几种StreamGrouping（一共七种）："></a>常用几种StreamGrouping（一共七种）：</h2><h4 id="1-shuffle-Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non-Grouping（不分组）类似-分组通过Random随机函数"><a href="#1-shuffle-Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non-Grouping（不分组）类似-分组通过Random随机函数" class="headerlink" title="1. shuffle Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non Grouping（不分组）类似 分组通过Random随机函数"></a>1. shuffle Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non Grouping（不分组）类似 分组通过Random随机函数</h4><h4 id="2-Fields-Grouping：按照字段分组-按照id和其他type分组。同样的id进入到同样的bolt-hashcode-num"><a href="#2-Fields-Grouping：按照字段分组-按照id和其他type分组。同样的id进入到同样的bolt-hashcode-num" class="headerlink" title="2. Fields Grouping：按照字段分组 按照id和其他type分组。同样的id进入到同样的bolt   hashcode%num"></a>2. Fields Grouping：按照字段分组 按照id和其他type分组。同样的id进入到同样的bolt   hashcode%num</h4><h4 id="3-All-Grouping：把Tuple广播-所有bolt都会收到"><a href="#3-All-Grouping：把Tuple广播-所有bolt都会收到" class="headerlink" title="3. All Grouping：把Tuple广播 所有bolt都会收到"></a>3. All Grouping：把Tuple广播 所有bolt都会收到</h4><h4 id="4-Local-or-shuffle-Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle）-避免网络传输"><a href="#4-Local-or-shuffle-Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle）-避免网络传输" class="headerlink" title="4. Local or shuffle Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle） 避免网络传输"></a>4. Local or shuffle Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle） 避免网络传输</h4><hr>
-<p>##并发度：用户指定的一种类型的任务（定义的Spout要干什么工作）被几个线程同时执行。并发度是多少就是线程的数量。一个任务的多个线程，会被运行在多个worker（JVM）上</p>
-<hr>
-<pre><code>有一种类似于平均算法的负载均衡策略。（尽可能减少网络IO传输和mr中程序的map方法尽量运行在数据所在节点的道理是一样的）
-</code></pre><h2 id="一个简单的Topology的工作流程"><a href="#一个简单的Topology的工作流程" class="headerlink" title="一个简单的Topology的工作流程"></a>一个简单的Topology的工作流程</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Topology1：</div><div class="line">-&gt;Spout获取外部一条一条的数据（String、json、javabean）</div><div class="line">-&gt;Spout在内部发送给Bolt（bolt进行业务处理）</div><div class="line">-&gt;内部有好多bolt进行业务步骤1.。2.。。3.这些bolt平行处理</div><div class="line">-&gt;bolt处理后将结果数据保存到Redis</div></pre></td></tr></table></figure>
+<h2 id="并发度：用户指定的一种类型的任务（定义的Spout要干什么工作）被几个线程同时执行。并发度是多少就是线程的数量。一个任务的多个线程，会被运行在多个worker（JVM）上"><a href="#并发度：用户指定的一种类型的任务（定义的Spout要干什么工作）被几个线程同时执行。并发度是多少就是线程的数量。一个任务的多个线程，会被运行在多个worker（JVM）上" class="headerlink" title="并发度：用户指定的一种类型的任务（定义的Spout要干什么工作）被几个线程同时执行。并发度是多少就是线程的数量。一个任务的多个线程，会被运行在多个worker（JVM）上"></a>并发度：用户指定的一种类型的任务（定义的Spout要干什么工作）被几个线程同时执行。并发度是多少就是线程的数量。一个任务的多个线程，会被运行在多个worker（JVM）上</h2><hr>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">   有一种类似于平均算法的负载均衡策略。</div><div class="line">（尽可能减少网络IO传输和mr中程序的map方法</div><div class="line">尽量运行在数据所在节点的道理是一样的）</div></pre></td></tr></table></figure>
+<h2 id="一个简单的Topology的工作流程"><a href="#一个简单的Topology的工作流程" class="headerlink" title="一个简单的Topology的工作流程"></a>一个简单的Topology的工作流程</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Topology1：</div><div class="line">-&gt;Spout获取外部一条一条的数据（String、json、javabean）</div><div class="line">-&gt;Spout在内部发送给Bolt（bolt进行业务处理）</div><div class="line">-&gt;内部有好多bolt进行业务步骤1.。2.。。3.这些bolt平行处理</div><div class="line">-&gt;bolt处理后将结果数据保存到Redis</div></pre></td></tr></table></figure>
 <h2 id="几个重要的点"><a href="#几个重要的点" class="headerlink" title="几个重要的点"></a>几个重要的点</h2><h3 id="1-一个storm可以获取多个数据源"><a href="#1-一个storm可以获取多个数据源" class="headerlink" title="1. 一个storm可以获取多个数据源"></a>1. 一个storm可以获取多个数据源</h3><h3 id="2-每个-Topology-之间不能共享数据"><a href="#2-每个-Topology-之间不能共享数据" class="headerlink" title="2. 每个 Topology 之间不能共享数据"></a>2. 每个 Topology 之间不能共享数据</h3><h3 id="3-一个-Topology的数据是自己独有的"><a href="#3-一个-Topology的数据是自己独有的" class="headerlink" title="3. 一个 Topology的数据是自己独有的"></a>3. 一个 Topology的数据是自己独有的</h3><h3 id="4-和其他-Topology没有关系"><a href="#4-和其他-Topology没有关系" class="headerlink" title="4. 和其他 Topology没有关系"></a>4. 和其他 Topology没有关系</h3><hr>
 <h2 id="storm内部架构："><a href="#storm内部架构：" class="headerlink" title="storm内部架构："></a>storm内部架构：</h2><ul>
 <li><h4 id="nimbus：任务分配，通过zookeeper和supervisor传送任务信息"><a href="#nimbus：任务分配，通过zookeeper和supervisor传送任务信息" class="headerlink" title="nimbus：任务分配，通过zookeeper和supervisor传送任务信息"></a>nimbus：任务分配，通过zookeeper和supervisor传送任务信息</h4></li>
@@ -335,8 +326,10 @@ key是在发送数据时传入的（proder.send（Keyedmessage（topic，myParti
 <li><h4 id="一个worker占用一个端口号"><a href="#一个worker占用一个端口号" class="headerlink" title="一个worker占用一个端口号"></a>一个worker占用一个端口号</h4></li>
 </ul>
 <h2 id="worker与topology"><a href="#worker与topology" class="headerlink" title="worker与topology"></a>worker与topology</h2><pre><code>一个worker只属于一个topology（和它共存亡）
-一个topology要求的worker数量不足时，集群在任务分配根据现有的worker数量先运行topology，如果当前中的worker数量为0 
-那么新提交的topology只会标识为active 不会运行。当有空闲的资源才运行 
+一个topology要求的worker数量不足时，
+集群在任务分配根据现有的worker数量先运行topology，
+如果当前中的worker数量为0 
+那么新提交的topology只会标识为active 不会运行。当有空闲的资源才运行
 </code></pre><h2 id="storm也有两种运行模式：集群。本地（在当前ide中运行）"><a href="#storm也有两种运行模式：集群。本地（在当前ide中运行）" class="headerlink" title="storm也有两种运行模式：集群。本地（在当前ide中运行）"></a>storm也有两种运行模式：集群。本地（在当前ide中运行）</h2>
       
 
@@ -552,8 +545,7 @@ key是在发送数据时传入的（proder.send（Keyedmessage（topic，myParti
 <li>key.serializer和value.serializer 也是它俩的序列化类。直接照抄就行。</li>
 </ol>
 <h3 id="consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer"><a href="#consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer" class="headerlink" title="consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer"></a>consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer</h3><h3 id="调用subscribe方法并传入一个asList来设置接收的各种话题"><a href="#调用subscribe方法并传入一个asList来设置接收的各种话题" class="headerlink" title="调用subscribe方法并传入一个asList来设置接收的各种话题"></a>调用subscribe方法并传入一个asList来设置接收的各种话题</h3><h3 id="consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords"><a href="#consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords" class="headerlink" title="consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords"></a>consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords</h3><h3 id="遍历这个ConsumerRecords-取出各种值"><a href="#遍历这个ConsumerRecords-取出各种值" class="headerlink" title="遍历这个ConsumerRecords 取出各种值"></a>遍历这个ConsumerRecords 取出各种值</h3><hr>
-<h3 id="Partition编程"><a href="#Partition编程" class="headerlink" title="Partition编程"></a>Partition编程</h3><p>####kafka通过seek（TopicPartition，long）控制消费者的消费的地方，指定心的位置。还有最早和最近维护便宜的方法seekToBeginning（Collection）和seekToEnd（Collection）</p>
-<h4 id="消费者自己指定partition-以及消费者对partition消费"><a href="#消费者自己指定partition-以及消费者对partition消费" class="headerlink" title="消费者自己指定partition 以及消费者对partition消费"></a>消费者自己指定partition 以及消费者对partition消费</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">     String topic = &quot;foo&quot;;</div><div class="line">     TopicPartition partition0 = new TopicPartition(topic, 0);</div><div class="line">     TopicPartition partition1 = new TopicPartition(topic, 1);</div><div class="line">     consumer.assign(Arrays.asList(partition0, partition1));</div><div class="line">```     </div><div class="line">#### 消费者自己指定partition后提交后一次的消息</div></pre></td></tr></table></figure>
+<h3 id="Partition编程"><a href="#Partition编程" class="headerlink" title="Partition编程"></a>Partition编程</h3><h4 id="kafka通过seek（TopicPartition，long）控制消费者的消费的地方，指定心的位置。还有最早和最近维护便宜的方法seekToBeginning（Collection）和seekToEnd（Collection）"><a href="#kafka通过seek（TopicPartition，long）控制消费者的消费的地方，指定心的位置。还有最早和最近维护便宜的方法seekToBeginning（Collection）和seekToEnd（Collection）" class="headerlink" title="kafka通过seek（TopicPartition，long）控制消费者的消费的地方，指定心的位置。还有最早和最近维护便宜的方法seekToBeginning（Collection）和seekToEnd（Collection）"></a>kafka通过seek（TopicPartition，long）控制消费者的消费的地方，指定心的位置。还有最早和最近维护便宜的方法seekToBeginning（Collection）和seekToEnd（Collection）</h4><h4 id="消费者自己指定partition-以及消费者对partition消费"><a href="#消费者自己指定partition-以及消费者对partition消费" class="headerlink" title="消费者自己指定partition 以及消费者对partition消费"></a>消费者自己指定partition 以及消费者对partition消费</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">     String topic = &quot;foo&quot;;</div><div class="line">     TopicPartition partition0 = new TopicPartition(topic, 0);</div><div class="line">     TopicPartition partition1 = new TopicPartition(topic, 1);</div><div class="line">     consumer.assign(Arrays.asList(partition0, partition1));</div><div class="line">```     </div><div class="line">#### 消费者自己指定partition后提交后一次的消息</div></pre></td></tr></table></figure>
 <pre><code>try {
     while(running) {
         ConsumerRecords&lt;String, String&gt; records = consumer.poll(Long.MAX_VALUE);
