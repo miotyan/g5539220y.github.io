@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>极速安装Storm | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="(重要！！！！)安装storm需要先安装zookeeper解压后进入conf-&amp;gt;修改storm.yaml必要内容1234567#zookeeper的服务节点storm.zookeeper.servers:    - &amp;quot;haihan&amp;quot;    - &amp;quot;gy&amp;quot;    - &amp;quot;clone_gy&amp;quot;#nimbus的地址nimbus.host: &amp;q">
+<meta name="keywords" content="Storm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="极速安装Storm">
+<meta property="og:url" content="http://yoursite.com/2018/02/20/极速安装Storm/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="(重要！！！！)安装storm需要先安装zookeeper解压后进入conf-&amp;gt;修改storm.yaml必要内容1234567#zookeeper的服务节点storm.zookeeper.servers:    - &amp;quot;haihan&amp;quot;    - &amp;quot;gy&amp;quot;    - &amp;quot;clone_gy&amp;quot;#nimbus的地址nimbus.host: &amp;q">
+<meta property="og:updated_time" content="2018-02-23T14:46:14.218Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="极速安装Storm">
+<meta name="twitter:description" content="(重要！！！！)安装storm需要先安装zookeeper解压后进入conf-&amp;gt;修改storm.yaml必要内容1234567#zookeeper的服务节点storm.zookeeper.servers:    - &amp;quot;haihan&amp;quot;    - &amp;quot;gy&amp;quot;    - &amp;quot;clone_gy&amp;quot;#nimbus的地址nimbus.host: &amp;q">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-极速安装Storm" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      极速安装Storm
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/20/极速安装Storm/" class="article-date">
+  <time datetime="2018-02-20T09:00:00.000Z" itemprop="datePublished">2018-02-20</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="重要！！！！-安装storm需要先安装zookeeper"><a href="#重要！！！！-安装storm需要先安装zookeeper" class="headerlink" title="(重要！！！！)安装storm需要先安装zookeeper"></a>(重要！！！！)安装storm需要先安装zookeeper</h2><h3 id="解压后进入conf-gt-修改storm-yaml"><a href="#解压后进入conf-gt-修改storm-yaml" class="headerlink" title="解压后进入conf-&gt;修改storm.yaml"></a>解压后进入conf-&gt;修改storm.yaml</h3><h2 id="必要内容"><a href="#必要内容" class="headerlink" title="必要内容"></a>必要内容</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#zookeeper的服务节点</div><div class="line">storm.zookeeper.servers:</div><div class="line">    - &quot;haihan&quot;</div><div class="line">    - &quot;gy&quot;</div><div class="line">    - &quot;clone_gy&quot;</div><div class="line">#nimbus的地址</div><div class="line">nimbus.host: &quot;haihan&quot;</div></pre></td></tr></table></figure>
+<hr>
+<h2 id="次要内容"><a href="#次要内容" class="headerlink" title="次要内容"></a>次要内容</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">#指定supervisor节点上，启动worker时对应的端口号，每个端口对应槽，每个槽位对应一个worker。</div><div class="line">supervisor.slots.ports:</div><div class="line">    - 6700</div><div class="line">    - 6701</div><div class="line">    - 6702</div><div class="line">    - 6703</div><div class="line">#指定nimbus启动JVM最大可用内存大小</div><div class="line">nimbus.childopts: &quot;-Xmx1024m&quot;</div><div class="line">#指定supervisor启动JVM最大可用内存大小</div><div class="line">supervisor.childopts: &quot;-Xmx1024m&quot;</div><div class="line">#指定supervisor节点上，每个worker启动JVM最大可用内存大小</div><div class="line">worker.childopts: &quot;-Xmx768m&quot;</div><div class="line">#指定ui启动JVM最大可用内存大小，ui服务一般与nimbus同在一个节点上。</div><div class="line">ui.childopts: &quot;-Xmx768m&quot;</div></pre></td></tr></table></figure>
+<h2 id="开始Storm之旅"><a href="#开始Storm之旅" class="headerlink" title="开始Storm之旅"></a>开始Storm之旅</h2><h3 id="启动为后台…master中启动nimbus和ui"><a href="#启动为后台…master中启动nimbus和ui" class="headerlink" title="启动为后台…master中启动nimbus和ui:"></a>启动为后台…master中启动nimbus和ui:</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">nohup storm nimbus &amp;</div><div class="line">nohup storm ui &amp;</div></pre></td></tr></table></figure>
+<p>###supervis机器上启动:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nohup storm supervisor &amp;</div></pre></td></tr></table></figure></p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/02/22/kafka理解和安装/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          kafka理解和安装
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/02/12/极速上手flume/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">极速上手flume</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2018 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

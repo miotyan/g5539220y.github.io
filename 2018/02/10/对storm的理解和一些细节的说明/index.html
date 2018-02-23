@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>对storm的理解和一些细节的说明 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Storm的几个重要概念：1. Datasource：外部数据源2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上4. Tuple：一次消息传递的基本单元（一个">
+<meta name="keywords" content="storm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对storm的理解和一些细节的说明">
+<meta property="og:url" content="http://yoursite.com/2018/02/10/对storm的理解和一些细节的说明/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="Storm的几个重要概念：1. Datasource：外部数据源2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上4. Tuple：一次消息传递的基本单元（一个">
+<meta property="og:updated_time" content="2018-02-23T14:38:44.700Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="对storm的理解和一些细节的说明">
+<meta name="twitter:description" content="Storm的几个重要概念：1. Datasource：外部数据源2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上4. Tuple：一次消息传递的基本单元（一个">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-对storm的理解和一些细节的说明" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      对storm的理解和一些细节的说明
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/10/对storm的理解和一些细节的说明/" class="article-date">
+  <time datetime="2018-02-10T14:06:00.000Z" itemprop="datePublished">2018-02-10</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Storm的几个重要概念："><a href="#Storm的几个重要概念：" class="headerlink" title="Storm的几个重要概念："></a>Storm的几个重要概念：</h2><h3 id="1-Datasource：外部数据源"><a href="#1-Datasource：外部数据源" class="headerlink" title="1. Datasource：外部数据源"></a>1. Datasource：外部数据源</h3><h3 id="2-Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt"><a href="#2-Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt" class="headerlink" title="2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt"></a>2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt</h3><h3 id="3-Bolt：接收Spout-或上游的bolt发送的数据-发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上"><a href="#3-Bolt：接收Spout-或上游的bolt发送的数据-发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上" class="headerlink" title="3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上"></a>3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上</h3><h3 id="4-Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据"><a href="#4-Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据" class="headerlink" title="4. Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据"></a>4. Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据</h3><h3 id="5-StreamGrouping：数据分组策略（hadoop中的hashcode-num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区"><a href="#5-StreamGrouping：数据分组策略（hadoop中的hashcode-num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区" class="headerlink" title="5. StreamGrouping：数据分组策略（hadoop中的hashcode%num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区"></a>5. StreamGrouping：数据分组策略（hadoop中的hashcode%num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区</h3><hr>
+<h2 id="常用几种StreamGrouping（一共七种）："><a href="#常用几种StreamGrouping（一共七种）：" class="headerlink" title="常用几种StreamGrouping（一共七种）："></a>常用几种StreamGrouping（一共七种）：</h2><h4 id="1-shuffle-Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non-Grouping（不分组）类似-分组通过Random随机函数"><a href="#1-shuffle-Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non-Grouping（不分组）类似-分组通过Random随机函数" class="headerlink" title="1. shuffle Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non Grouping（不分组）类似 分组通过Random随机函数"></a>1. shuffle Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non Grouping（不分组）类似 分组通过Random随机函数</h4><h4 id="2-Fields-Grouping：按照字段分组-按照id和其他type分组。同样的id进入到同样的bolt-hashcode-num"><a href="#2-Fields-Grouping：按照字段分组-按照id和其他type分组。同样的id进入到同样的bolt-hashcode-num" class="headerlink" title="2. Fields Grouping：按照字段分组 按照id和其他type分组。同样的id进入到同样的bolt   hashcode%num"></a>2. Fields Grouping：按照字段分组 按照id和其他type分组。同样的id进入到同样的bolt   hashcode%num</h4><h4 id="3-All-Grouping：把Tuple广播-所有bolt都会收到"><a href="#3-All-Grouping：把Tuple广播-所有bolt都会收到" class="headerlink" title="3. All Grouping：把Tuple广播 所有bolt都会收到"></a>3. All Grouping：把Tuple广播 所有bolt都会收到</h4><h4 id="4-Local-or-shuffle-Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle）-避免网络传输"><a href="#4-Local-or-shuffle-Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle）-避免网络传输" class="headerlink" title="4. Local or shuffle Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle） 避免网络传输"></a>4. Local or shuffle Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle） 避免网络传输</h4><hr>
+<p>##并发度：用户指定的一种类型的任务（定义的Spout要干什么工作）被几个线程同时执行。并发度是多少就是线程的数量。一个任务的多个线程，会被运行在多个worker（JVM）上</p>
+<hr>
+<pre><code>有一种类似于平均算法的负载均衡策略。（尽可能减少网络IO传输和mr中程序的map方法尽量运行在数据所在节点的道理是一样的）
+</code></pre><h2 id="一个简单的Topology的工作流程"><a href="#一个简单的Topology的工作流程" class="headerlink" title="一个简单的Topology的工作流程"></a>一个简单的Topology的工作流程</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Topology1：</div><div class="line">-&gt;Spout获取外部一条一条的数据（String、json、javabean）</div><div class="line">-&gt;Spout在内部发送给Bolt（bolt进行业务处理）</div><div class="line">-&gt;内部有好多bolt进行业务步骤1.。2.。。3.这些bolt平行处理</div><div class="line">-&gt;bolt处理后将结果数据保存到Redis</div></pre></td></tr></table></figure>
+<h2 id="几个重要的点"><a href="#几个重要的点" class="headerlink" title="几个重要的点"></a>几个重要的点</h2><h3 id="1-一个storm可以获取多个数据源"><a href="#1-一个storm可以获取多个数据源" class="headerlink" title="1. 一个storm可以获取多个数据源"></a>1. 一个storm可以获取多个数据源</h3><h3 id="2-每个-Topology-之间不能共享数据"><a href="#2-每个-Topology-之间不能共享数据" class="headerlink" title="2. 每个 Topology 之间不能共享数据"></a>2. 每个 Topology 之间不能共享数据</h3><h3 id="3-一个-Topology的数据是自己独有的"><a href="#3-一个-Topology的数据是自己独有的" class="headerlink" title="3. 一个 Topology的数据是自己独有的"></a>3. 一个 Topology的数据是自己独有的</h3><h3 id="4-和其他-Topology没有关系"><a href="#4-和其他-Topology没有关系" class="headerlink" title="4. 和其他 Topology没有关系"></a>4. 和其他 Topology没有关系</h3><hr>
+<h2 id="storm内部架构："><a href="#storm内部架构：" class="headerlink" title="storm内部架构："></a>storm内部架构：</h2><ul>
+<li><h4 id="nimbus：任务分配，通过zookeeper和supervisor传送任务信息"><a href="#nimbus：任务分配，通过zookeeper和supervisor传送任务信息" class="headerlink" title="nimbus：任务分配，通过zookeeper和supervisor传送任务信息"></a>nimbus：任务分配，通过zookeeper和supervisor传送任务信息</h4></li>
+<li><h4 id="supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker"><a href="#supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker" class="headerlink" title="supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker"></a>supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker</h4></li>
+<li><h4 id="worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。"><a href="#worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。" class="headerlink" title="worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。"></a>worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。</h4></li>
+<li><h4 id="Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0-8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor-thread-task"><a href="#Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0-8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor-thread-task" class="headerlink" title="Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0.8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor=thread=task"></a>Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0.8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor=thread=task</h4></li>
+<li><h4 id="zookeeper：保存任务分配、心跳信息。"><a href="#zookeeper：保存任务分配、心跳信息。" class="headerlink" title="zookeeper：保存任务分配、心跳信息。"></a>zookeeper：保存任务分配、心跳信息。</h4></li>
+<li><h4 id="一台物理机可以起多个worker-数量跟物理配置、端口号有关"><a href="#一台物理机可以起多个worker-数量跟物理配置、端口号有关" class="headerlink" title="一台物理机可以起多个worker 数量跟物理配置、端口号有关"></a>一台物理机可以起多个worker 数量跟物理配置、端口号有关</h4></li>
+<li><h4 id="一个worker占用一个端口号"><a href="#一个worker占用一个端口号" class="headerlink" title="一个worker占用一个端口号"></a>一个worker占用一个端口号</h4></li>
+</ul>
+<h2 id="worker与topology"><a href="#worker与topology" class="headerlink" title="worker与topology"></a>worker与topology</h2><pre><code>一个worker只属于一个topology（和它共存亡）
+一个topology要求的worker数量不足时，集群在任务分配根据现有的worker数量先运行topology，如果当前中的worker数量为0 
+那么新提交的topology只会标识为active 不会运行。当有空闲的资源才运行 
+</code></pre><h2 id="storm也有两种运行模式：集群。本地（在当前ide中运行）"><a href="#storm也有两种运行模式：集群。本地（在当前ide中运行）" class="headerlink" title="storm也有两种运行模式：集群。本地（在当前ide中运行）"></a>storm也有两种运行模式：集群。本地（在当前ide中运行）</h2>
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/02/11/scala 高级特型和隐式转换/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          scala 高级特型和隐式转换
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/02/07/Spark的几个高级算子/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Spark的几个高级算子</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2018 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

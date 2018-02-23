@@ -28,6 +28,190 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-突然发现kafka的几个小细节" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/02/23/突然发现kafka的几个小细节/">突然发现kafka的几个小细节</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/23/突然发现kafka的几个小细节/" class="article-date">
+  <time datetime="2018-02-23T13:56:00.000Z" itemprop="datePublished">2018-02-23</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="1-kafka生产数据时的分组策略"><a href="#1-kafka生产数据时的分组策略" class="headerlink" title="1.  kafka生产数据时的分组策略"></a>1.  kafka生产数据时的分组策略</h2><pre><code>默认是defaultPartition Utils.abs(key.hashCode)%numPartitions
+key是在发送数据时传入的（proder.send（Keyedmessage（topic，myPartionKey，messAge））），
+</code></pre><h2 id="2-kafka如何保证数据的完全生产"><a href="#2-kafka如何保证数据的完全生产" class="headerlink" title="2. kafka如何保证数据的完全生产"></a>2. kafka如何保证数据的完全生产</h2><pre><code><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">  ack机制，broker表示发来的数据已确认无误，表示数据已保存内存或磁盘</div><div class="line"> 0 不等待block返回确认消息 </div><div class="line">-1 等待topic中的某个 partition leader保存成功的状态反馈</div><div class="line"> 1 等待topic中的某个 partition 所有副本都保存成功的反馈</div></pre></td></tr></table></figure>
+</code></pre><h2 id="3-broker如何保存数据"><a href="#3-broker如何保存数据" class="headerlink" title="3. broker如何保存数据"></a>3. broker如何保存数据</h2><h3 id="在理论环境下，-broker-按照顺序读写的机制，可以每秒保存600M的数据（PageCache机制：PageCache本质就是把尽可能多的空闲内存当磁盘缓存来用）当前topic所属的broker上，必定有一个该topic的-partition-，-partition是一个磁盘目录中有多个segment集合（index，log）"><a href="#在理论环境下，-broker-按照顺序读写的机制，可以每秒保存600M的数据（PageCache机制：PageCache本质就是把尽可能多的空闲内存当磁盘缓存来用）当前topic所属的broker上，必定有一个该topic的-partition-，-partition是一个磁盘目录中有多个segment集合（index，log）" class="headerlink" title="在理论环境下， broker 按照顺序读写的机制，可以每秒保存600M的数据（PageCache机制：PageCache本质就是把尽可能多的空闲内存当磁盘缓存来用）当前topic所属的broker上，必定有一个该topic的 partition ， partition是一个磁盘目录中有多个segment集合（index，log）"></a>在理论环境下， broker 按照顺序读写的机制，可以每秒保存600M的数据（PageCache机制：PageCache本质就是把尽可能多的空闲内存当磁盘缓存来用）当前topic所属的broker上，必定有一个该topic的 partition ， partition是一个磁盘目录中有多个segment集合（index，log）</h3><h2 id="4-consumer和partition之间如何做负载均衡"><a href="#4-consumer和partition之间如何做负载均衡" class="headerlink" title="4. consumer和partition之间如何做负载均衡"></a>4. consumer和partition之间如何做负载均衡</h2><p>  ###最好是一一对应， 一个 partition 对应一个 consumer 如果consumer的数量过多，就会产生空闲的consumer<br>  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">算法：</div><div class="line">有topic1, partitions :p0,p1,p2,p3</div><div class="line">加入group中，有如下consumer:c1,c2</div><div class="line">首先根据partition索引号对 partitions排序和根据 consumer.id排序</div><div class="line">计算倍数：M = [p0,p1,p2,p3].size/[c1,c2].size 结果值</div><div class="line">然后依次分配 partitions：c1 = [p0,p1],c2=[p2,p3] 即Ci = [p(i*M),p((i+1)*M-1)]</div></pre></td></tr></table></figure></p>
+<h2 id="5-如何保证kafka消费者消费数据时全局有序的"><a href="#5-如何保证kafka消费者消费数据时全局有序的" class="headerlink" title="5. 如何保证kafka消费者消费数据时全局有序的"></a>5. 如何保证kafka消费者消费数据时全局有序的</h2><h3 id="保证不了，因为如果要全局有序，必须保证生产有序，存储有序，消费有序。有序，生产做集群，存储分片，消费设置为一个consumerGroup，要保证全局有序，就需要保证每个环节都有序只有一种可能就是只有一个-生产者-和-一个-partition-一个消费者。这种场景和大数据相悖。"><a href="#保证不了，因为如果要全局有序，必须保证生产有序，存储有序，消费有序。有序，生产做集群，存储分片，消费设置为一个consumerGroup，要保证全局有序，就需要保证每个环节都有序只有一种可能就是只有一个-生产者-和-一个-partition-一个消费者。这种场景和大数据相悖。" class="headerlink" title="保证不了，因为如果要全局有序，必须保证生产有序，存储有序，消费有序。有序，生产做集群，存储分片，消费设置为一个consumerGroup，要保证全局有序，就需要保证每个环节都有序只有一种可能就是只有一个 生产者 和 一个 partition , 一个消费者。这种场景和大数据相悖。"></a>保证不了，因为如果要全局有序，必须保证生产有序，存储有序，消费有序。有序，生产做集群，存储分片，消费设置为一个consumerGroup，要保证全局有序，就需要保证每个环节都有序只有一种可能就是只有一个 生产者 和 一个 partition , 一个消费者。这种场景和大数据相悖。</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-kafka理解和安装" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/02/22/kafka理解和安装/">kafka理解和安装</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/22/kafka理解和安装/" class="article-date">
+  <time datetime="2018-02-22T14:39:00.000Z" itemprop="datePublished">2018-02-22</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>#kafka是一个缓存数据的系统。</p>
+<h2 id="Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算"><a href="#Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算" class="headerlink" title="(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)"></a>(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)</h2><p>###kafka是一个分布式的消息缓存系统。由Scala写成。</p>
+<p>###一个生产者消费者模型。类似与JMS的特性  </p>
+<hr>
+<p>#kafka基本理解</p>
+<ol>
+<li>类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。</li>
+<li>数据生产者messageProducer：只负责数据生产，生产者的代码可以集成到任何系统中。<pre><code>数据分发策略由producer决定。默认是defaultPartition Utils.abs(key.hashCode)%numPartitions
+</code></pre></li>
+<li><p>数据消费者messageConsumer（增加MessageGroup）：可以有多个。每个consumer消费的数据都是一样的。consumer的组（consumerGroup），可以把多个consumer线程划分一个组，组里面的所有成员共同消费一个topic数据，组员之间不重复消费</p>
+</li>
+<li><p>数据的分类，主题：topic、destination（消息发送的目的地。本质Queue）<br>topic：目标发送的目的地。这是一个逻辑概念。落到磁盘上是一个partition目录。partition的目录中有多个segment组合（index，log），一个topic对应多个partition。一个partition对应多个segment组合。一个segment默认1G。</p>
+<pre><code>每个parttiion可以设置多个副本（参数：--replication-factor 副本数）,所有的读写操作都是通过选举出一个leader来进行的。和mysql有区别，mesql做主从是读写分离。kafka中读写都是leader
+</code></pre></li>
+<li>broker（中间人）：管理保存数据的进程，只管数据存储，不管是谁生产，是谁消费。在集群中必须有个blockid</li>
+<li>数据的分片分组：Partition，有多个，不同机器上有不同的机器的副本。数据生产到集群中的那一个parttion由生产者决定（Key的Hash算法）<br>每个parttiion是一个大文件 切割成小文件存在集群中</li>
+</ol>
+<p>一个组中的数据最好和分片数对应，一个分片对应一个组中的消费成员<br>如果组中的成员太多，必然会有成员空闲。</p>
+<p>##partition数量和broker数量关系</p>
+<p>###每个parttion数据如何保存到硬盘</p>
+<p>###面试题:如何保证消费者消费的数据是有序的</p>
+<ol>
+<li>生产者集群模式有序号管理器</li>
+<li>blocker端只设置一个partition</li>
+<li>consumer如果是一个组，如何保证消费者有序—&gt;消费者线程里自定义一个数据结构来排序<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">一个partition的数据是间断性有序的，不连续</div><div class="line">针对一个tipic里的数据，只能做到partition内部有序，不能做到全局有序</div><div class="line">只有一种情况---&gt; 就是只有一个partition</div><div class="line">考虑kafka并发下的负载均衡</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>###Kafka集群结构</p>
+<ol>
+<li>kafka集群的服务器都叫broker。kafka有两类客户端（messageProducer、messageConsumer)</li>
+<li>客户端和服务器之间采用TCP服务器连接</li>
+<li>kafka中不同的业务的消息通过topic进行区分。而且每一个消息topic都会被分区，以分担消息读写的负载</li>
+<li>每一个分区都可以有多个副本，以防止数据的丢失。每一个分区中的数据如果需要更新都必须通过该分区所有副本中的leader来更新！</li>
+</ol>
+<p>###Kafka在消费者中标记信息<br>kafka消费者在集群中分组，</p>
+<ul>
+<li><p>比如两个消费者共同消费一个topic：order_info，A和B所消费的消息不会重复<br>比如 order_inf中有100条消息，每个消息id，编号从0-99 消费者A消费0-49 消费者B就消耗50-99</p>
+</li>
+<li><p>消费者在具体消费某个topic中的消息时，可以指定起始偏移量</p>
+</li>
+<li><p>消息的格式可以是javabean、json、xml</p>
+</li>
+</ul>
+<h1 id="kafka安装"><a href="#kafka安装" class="headerlink" title="kafka安装"></a>kafka安装</h1><h2 id="集群安装"><a href="#集群安装" class="headerlink" title="集群安装"></a>集群安装</h2><ol>
+<li>解压</li>
+<li><p>修改server.properties</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">broker.id=1</div><div class="line">log.dirs=&#123;日志目录&#125;</div><div class="line">zookeeper.connect=weekend05:2181,weekend06:2181,weekend07:2181</div></pre></td></tr></table></figure>
+</li>
+<li><p>将zookeeper集群启动</p>
+</li>
+<li><p>在每一台节点上启动broker<br>bin/kafka-server-start.sh config/server.properties</p>
+</li>
+<li><p>在kafka集群中创建一个topic<br>bin/kafka-topics.sh –create –zookeeper haihan:2181 –replication-factor 3 –partitions 1 –topic gy_noTopic</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">bin/kafka-topics.sh --create --zookeeper haihan:2181  //zookeeper地址 </div><div class="line">--replication-factor 3  //副本数量为3  </div><div class="line">--partitions 1          //分区数   </div><div class="line">--topic gy_noTopic      //话题名</div></pre></td></tr></table></figure>
+</li>
+<li><p>用一个producer向某一个topic中写入消息 bin/kafka-console-producer.sh –broker-list haihan:9092 –topic gy_noTopic</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">bin/kafka-console-producer.sh --broker-list haihan:9092  //broker地址 </div><div class="line">--topic gy_noTopic   //话题名</div></pre></td></tr></table></figure>
+<p>7.用一个comsumer从某一个topic中读取信息<br>bin/kafka-console-consumer.sh –zookeeper haihan:2181 –from-beginning –topic gy_noTopic</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">bin/kafka-console-consumer.sh --zookeeper haihan:2181 //zookeeper地址</div><div class="line">--from-beginning    //是否显示历史消息</div><div class="line">--topic gy_noTopic     //话题名</div></pre></td></tr></table></figure>
+<p>8.查看一个topic的分区及副本状态信息<br>bin/kafka-topics.sh –describe –zookeeper haihan:2181 –topic order<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">bin/kafka-topics.sh --describe --zookeeper haihan:2181 //zookeeper地址</div><div class="line">--topic gy_noTopic      //话题名</div></pre></td></tr></table></figure></p>
+<h4 id="消息含义-Replicas-副本在集群的broker-id、leader-副本在集群中的leader（通过选举）、Isr-同步状态"><a href="#消息含义-Replicas-副本在集群的broker-id、leader-副本在集群中的leader（通过选举）、Isr-同步状态" class="headerlink" title="消息含义:Replicas 副本在集群的broker.id、leader 副本在集群中的leader（通过选举）、Isr 同步状态"></a>消息含义:Replicas 副本在集群的broker.id、leader 副本在集群中的leader（通过选举）、Isr 同步状态</h4><ol>
+<li>查看已创建话题<br>bin/kafka-topics.sh –list –zookeeper haihan:2181</li>
+</ol>
+<h3 id="面试题警告！"><a href="#面试题警告！" class="headerlink" title="面试题警告！"></a>面试题警告！</h3><h4 id="kafka消费者读操作为什么快"><a href="#kafka消费者读操作为什么快" class="headerlink" title="kafka消费者读操作为什么快"></a>kafka消费者读操作为什么快</h4><p>消费者先从PageCache（内存）中查找，如果发生缺页才进行磁盘查找</p>
+<p>最终返回实际数据，PageCache本质就是把尽可能多的空闲内存当磁盘缓存来用。</p>
+<p>在JVM中的缓存是当前进行的缓存</p>
+<p>使用PageCache功能避免在JVM内存缓存，JVM有强大的GC能力，如果数据进行多次GC后放到持久里就会出现不必要的问题<br>PageCache只是第一步。。进一步Sendfile服务，在硬盘中直接到网卡 不经过应用</p>
+<h4 id="总结出来主要原因："><a href="#总结出来主要原因：" class="headerlink" title="总结出来主要原因："></a>总结出来主要原因：</h4><p>1.大量使用内存（PageCache）<br>2.发送数据不走应用（Sendfile）</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-极速安装Storm" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/02/20/极速安装Storm/">极速安装Storm</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/20/极速安装Storm/" class="article-date">
+  <time datetime="2018-02-20T09:00:00.000Z" itemprop="datePublished">2018-02-20</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="重要！！！！-安装storm需要先安装zookeeper"><a href="#重要！！！！-安装storm需要先安装zookeeper" class="headerlink" title="(重要！！！！)安装storm需要先安装zookeeper"></a>(重要！！！！)安装storm需要先安装zookeeper</h2><h3 id="解压后进入conf-gt-修改storm-yaml"><a href="#解压后进入conf-gt-修改storm-yaml" class="headerlink" title="解压后进入conf-&gt;修改storm.yaml"></a>解压后进入conf-&gt;修改storm.yaml</h3><h2 id="必要内容"><a href="#必要内容" class="headerlink" title="必要内容"></a>必要内容</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#zookeeper的服务节点</div><div class="line">storm.zookeeper.servers:</div><div class="line">    - &quot;haihan&quot;</div><div class="line">    - &quot;gy&quot;</div><div class="line">    - &quot;clone_gy&quot;</div><div class="line">#nimbus的地址</div><div class="line">nimbus.host: &quot;haihan&quot;</div></pre></td></tr></table></figure>
+<hr>
+<h2 id="次要内容"><a href="#次要内容" class="headerlink" title="次要内容"></a>次要内容</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">#指定supervisor节点上，启动worker时对应的端口号，每个端口对应槽，每个槽位对应一个worker。</div><div class="line">supervisor.slots.ports:</div><div class="line">    - 6700</div><div class="line">    - 6701</div><div class="line">    - 6702</div><div class="line">    - 6703</div><div class="line">#指定nimbus启动JVM最大可用内存大小</div><div class="line">nimbus.childopts: &quot;-Xmx1024m&quot;</div><div class="line">#指定supervisor启动JVM最大可用内存大小</div><div class="line">supervisor.childopts: &quot;-Xmx1024m&quot;</div><div class="line">#指定supervisor节点上，每个worker启动JVM最大可用内存大小</div><div class="line">worker.childopts: &quot;-Xmx768m&quot;</div><div class="line">#指定ui启动JVM最大可用内存大小，ui服务一般与nimbus同在一个节点上。</div><div class="line">ui.childopts: &quot;-Xmx768m&quot;</div></pre></td></tr></table></figure>
+<h2 id="开始Storm之旅"><a href="#开始Storm之旅" class="headerlink" title="开始Storm之旅"></a>开始Storm之旅</h2><h3 id="启动为后台…master中启动nimbus和ui"><a href="#启动为后台…master中启动nimbus和ui" class="headerlink" title="启动为后台…master中启动nimbus和ui:"></a>启动为后台…master中启动nimbus和ui:</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">nohup storm nimbus &amp;</div><div class="line">nohup storm ui &amp;</div></pre></td></tr></table></figure>
+<p>###supervis机器上启动:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nohup storm supervisor &amp;</div></pre></td></tr></table></figure></p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-极速上手flume" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -100,6 +284,60 @@
 </li>
 </ul>
 <h2 id="3-scala的泛型表达方式"><a href="#3-scala的泛型表达方式" class="headerlink" title="3.scala的泛型表达方式"></a>3.scala的泛型表达方式</h2><h3 id="T-lt-上界"><a href="#T-lt-上界" class="headerlink" title="[T &lt;: 上界]"></a>[T &lt;: 上界]</h3><h3 id="T-gt-下界"><a href="#T-gt-下界" class="headerlink" title="[T &gt;: 下界]"></a>[T &gt;: 下界]</h3><h3 id="T-lt-视图定界-它必须传进去一个隐式转换的函数-相当于柯里化中的第二个括号中的隐式函数"><a href="#T-lt-视图定界-它必须传进去一个隐式转换的函数-相当于柯里化中的第二个括号中的隐式函数" class="headerlink" title="[T &lt;% 视图定界] 它必须传进去一个隐式转换的函数,相当于柯里化中的第二个括号中的隐式函数"></a>[T &lt;% 视图定界] 它必须传进去一个隐式转换的函数,相当于柯里化中的第二个括号中的隐式函数</h3><h3 id="T-上下文界定-它必须传一个隐式转换的值-相当于传一个变量-通过变量的类型来进行规则"><a href="#T-上下文界定-它必须传一个隐式转换的值-相当于传一个变量-通过变量的类型来进行规则" class="headerlink" title="[T : 上下文界定] 它必须传一个隐式转换的值,相当于传一个变量 通过变量的类型来进行规则"></a>[T : 上下文界定] 它必须传一个隐式转换的值,相当于传一个变量 通过变量的类型来进行规则</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-对storm的理解和一些细节的说明" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/02/10/对storm的理解和一些细节的说明/">对storm的理解和一些细节的说明</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/10/对storm的理解和一些细节的说明/" class="article-date">
+  <time datetime="2018-02-10T14:06:00.000Z" itemprop="datePublished">2018-02-10</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Storm的几个重要概念："><a href="#Storm的几个重要概念：" class="headerlink" title="Storm的几个重要概念："></a>Storm的几个重要概念：</h2><h3 id="1-Datasource：外部数据源"><a href="#1-Datasource：外部数据源" class="headerlink" title="1. Datasource：外部数据源"></a>1. Datasource：外部数据源</h3><h3 id="2-Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt"><a href="#2-Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt" class="headerlink" title="2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt"></a>2. Spout：获取外部数据源，将外部数据源转化成storm内部数据，以Tuple为基本的传输单元发给Bolt</h3><h3 id="3-Bolt：接收Spout-或上游的bolt发送的数据-发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上"><a href="#3-Bolt：接收Spout-或上游的bolt发送的数据-发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上" class="headerlink" title="3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上"></a>3. Bolt：接收Spout(或上游的bolt发送的数据)发送的数据，进行业务逻辑处理节点。可以有多个。处理后发送给下一个bolt或者存储到某种介质（mysql、Redis）上</h3><h3 id="4-Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据"><a href="#4-Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据" class="headerlink" title="4. Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据"></a>4. Tuple：一次消息传递的基本单元（一个对象，封装一个List）用来保存数据</h3><h3 id="5-StreamGrouping：数据分组策略（hadoop中的hashcode-num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区"><a href="#5-StreamGrouping：数据分组策略（hadoop中的hashcode-num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区" class="headerlink" title="5. StreamGrouping：数据分组策略（hadoop中的hashcode%num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区"></a>5. StreamGrouping：数据分组策略（hadoop中的hashcode%num）Spout在给bolt发送Tuple时对Bolt有一个StreamGrouping，对Bolt进行分区</h3><hr>
+<h2 id="常用几种StreamGrouping（一共七种）："><a href="#常用几种StreamGrouping（一共七种）：" class="headerlink" title="常用几种StreamGrouping（一共七种）："></a>常用几种StreamGrouping（一共七种）：</h2><h4 id="1-shuffle-Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non-Grouping（不分组）类似-分组通过Random随机函数"><a href="#1-shuffle-Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non-Grouping（不分组）类似-分组通过Random随机函数" class="headerlink" title="1. shuffle Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non Grouping（不分组）类似 分组通过Random随机函数"></a>1. shuffle Grouping：随机分组，随机发stream里面的Tuple给bolt，保证每个bolt里的tuple大致相同。这类分组方式的结果与Non Grouping（不分组）类似 分组通过Random随机函数</h4><h4 id="2-Fields-Grouping：按照字段分组-按照id和其他type分组。同样的id进入到同样的bolt-hashcode-num"><a href="#2-Fields-Grouping：按照字段分组-按照id和其他type分组。同样的id进入到同样的bolt-hashcode-num" class="headerlink" title="2. Fields Grouping：按照字段分组 按照id和其他type分组。同样的id进入到同样的bolt   hashcode%num"></a>2. Fields Grouping：按照字段分组 按照id和其他type分组。同样的id进入到同样的bolt   hashcode%num</h4><h4 id="3-All-Grouping：把Tuple广播-所有bolt都会收到"><a href="#3-All-Grouping：把Tuple广播-所有bolt都会收到" class="headerlink" title="3. All Grouping：把Tuple广播 所有bolt都会收到"></a>3. All Grouping：把Tuple广播 所有bolt都会收到</h4><h4 id="4-Local-or-shuffle-Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle）-避免网络传输"><a href="#4-Local-or-shuffle-Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle）-避免网络传输" class="headerlink" title="4. Local or shuffle Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle） 避免网络传输"></a>4. Local or shuffle Grouping：Spout优先把Tuple发给自己本地机器上的bolt（自己在本地发采用shuffle） 避免网络传输</h4><hr>
+<p>##并发度：用户指定的一种类型的任务（定义的Spout要干什么工作）被几个线程同时执行。并发度是多少就是线程的数量。一个任务的多个线程，会被运行在多个worker（JVM）上</p>
+<hr>
+<pre><code>有一种类似于平均算法的负载均衡策略。（尽可能减少网络IO传输和mr中程序的map方法尽量运行在数据所在节点的道理是一样的）
+</code></pre><h2 id="一个简单的Topology的工作流程"><a href="#一个简单的Topology的工作流程" class="headerlink" title="一个简单的Topology的工作流程"></a>一个简单的Topology的工作流程</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Topology1：</div><div class="line">-&gt;Spout获取外部一条一条的数据（String、json、javabean）</div><div class="line">-&gt;Spout在内部发送给Bolt（bolt进行业务处理）</div><div class="line">-&gt;内部有好多bolt进行业务步骤1.。2.。。3.这些bolt平行处理</div><div class="line">-&gt;bolt处理后将结果数据保存到Redis</div></pre></td></tr></table></figure>
+<h2 id="几个重要的点"><a href="#几个重要的点" class="headerlink" title="几个重要的点"></a>几个重要的点</h2><h3 id="1-一个storm可以获取多个数据源"><a href="#1-一个storm可以获取多个数据源" class="headerlink" title="1. 一个storm可以获取多个数据源"></a>1. 一个storm可以获取多个数据源</h3><h3 id="2-每个-Topology-之间不能共享数据"><a href="#2-每个-Topology-之间不能共享数据" class="headerlink" title="2. 每个 Topology 之间不能共享数据"></a>2. 每个 Topology 之间不能共享数据</h3><h3 id="3-一个-Topology的数据是自己独有的"><a href="#3-一个-Topology的数据是自己独有的" class="headerlink" title="3. 一个 Topology的数据是自己独有的"></a>3. 一个 Topology的数据是自己独有的</h3><h3 id="4-和其他-Topology没有关系"><a href="#4-和其他-Topology没有关系" class="headerlink" title="4. 和其他 Topology没有关系"></a>4. 和其他 Topology没有关系</h3><hr>
+<h2 id="storm内部架构："><a href="#storm内部架构：" class="headerlink" title="storm内部架构："></a>storm内部架构：</h2><ul>
+<li><h4 id="nimbus：任务分配，通过zookeeper和supervisor传送任务信息"><a href="#nimbus：任务分配，通过zookeeper和supervisor传送任务信息" class="headerlink" title="nimbus：任务分配，通过zookeeper和supervisor传送任务信息"></a>nimbus：任务分配，通过zookeeper和supervisor传送任务信息</h4></li>
+<li><h4 id="supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker"><a href="#supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker" class="headerlink" title="supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker"></a>supervisor：当前物理机上的管理，负责接收nimbus分配的任务，收到任务，启动worker</h4></li>
+<li><h4 id="worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。"><a href="#worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。" class="headerlink" title="worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。"></a>worker：执行具体任务的组件。任务类型：Spout、bolt。可以同时存在多个Spout、bolt任务。启动一个exector线程。其实就是一个JVM。</h4></li>
+<li><h4 id="Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0-8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor-thread-task"><a href="#Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0-8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor-thread-task" class="headerlink" title="Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0.8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor=thread=task"></a>Task（本质上是一个线程）：worker每一个Spout、bolt的线程成为一个task。每个Task属于某个组件并发度中的一个。strom0.8以后task的线程不与物理线程同步，即一个exector可以有多个Task。但在默认情况下：executor=thread=task</h4></li>
+<li><h4 id="zookeeper：保存任务分配、心跳信息。"><a href="#zookeeper：保存任务分配、心跳信息。" class="headerlink" title="zookeeper：保存任务分配、心跳信息。"></a>zookeeper：保存任务分配、心跳信息。</h4></li>
+<li><h4 id="一台物理机可以起多个worker-数量跟物理配置、端口号有关"><a href="#一台物理机可以起多个worker-数量跟物理配置、端口号有关" class="headerlink" title="一台物理机可以起多个worker 数量跟物理配置、端口号有关"></a>一台物理机可以起多个worker 数量跟物理配置、端口号有关</h4></li>
+<li><h4 id="一个worker占用一个端口号"><a href="#一个worker占用一个端口号" class="headerlink" title="一个worker占用一个端口号"></a>一个worker占用一个端口号</h4></li>
+</ul>
+<h2 id="worker与topology"><a href="#worker与topology" class="headerlink" title="worker与topology"></a>worker与topology</h2><pre><code>一个worker只属于一个topology（和它共存亡）
+一个topology要求的worker数量不足时，集群在任务分配根据现有的worker数量先运行topology，如果当前中的worker数量为0 
+那么新提交的topology只会标识为active 不会运行。当有空闲的资源才运行 
+</code></pre><h2 id="storm也有两种运行模式：集群。本地（在当前ide中运行）"><a href="#storm也有两种运行模式：集群。本地（在当前ide中运行）" class="headerlink" title="storm也有两种运行模式：集群。本地（在当前ide中运行）"></a>storm也有两种运行模式：集群。本地（在当前ide中运行）</h2>
       
 
       
@@ -313,184 +551,26 @@
 <li>auto.commit.interval.ms  consumer向zookeeper提交offset的频率</li>
 <li>key.serializer和value.serializer 也是它俩的序列化类。直接照抄就行。</li>
 </ol>
-<h3 id="consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer"><a href="#consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer" class="headerlink" title="consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer"></a>consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer</h3><h3 id="调用subscribe方法并传入一个asList来设置接收的各种话题"><a href="#调用subscribe方法并传入一个asList来设置接收的各种话题" class="headerlink" title="调用subscribe方法并传入一个asList来设置接收的各种话题"></a>调用subscribe方法并传入一个asList来设置接收的各种话题</h3><h3 id="consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords"><a href="#consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords" class="headerlink" title="consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords"></a>consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords</h3><h3 id="遍历这个ConsumerRecords-取出各种值"><a href="#遍历这个ConsumerRecords-取出各种值" class="headerlink" title="遍历这个ConsumerRecords 取出各种值"></a>遍历这个ConsumerRecords 取出各种值</h3>
-      
+<h3 id="consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer"><a href="#consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer" class="headerlink" title="consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer"></a>consumer和producer的构造类似，也是通过配置文件构造对象，同样通过KafkaConsumer</h3><h3 id="调用subscribe方法并传入一个asList来设置接收的各种话题"><a href="#调用subscribe方法并传入一个asList来设置接收的各种话题" class="headerlink" title="调用subscribe方法并传入一个asList来设置接收的各种话题"></a>调用subscribe方法并传入一个asList来设置接收的各种话题</h3><h3 id="consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords"><a href="#consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords" class="headerlink" title="consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords"></a>consumer通过调用poll方法取消息队列中的的队首同时移除该队列然后返回一个ConsumerRecords</h3><h3 id="遍历这个ConsumerRecords-取出各种值"><a href="#遍历这个ConsumerRecords-取出各种值" class="headerlink" title="遍历这个ConsumerRecords 取出各种值"></a>遍历这个ConsumerRecords 取出各种值</h3><hr>
+<h3 id="Partition编程"><a href="#Partition编程" class="headerlink" title="Partition编程"></a>Partition编程</h3><p>####kafka通过seek（TopicPartition，long）控制消费者的消费的地方，指定心的位置。还有最早和最近维护便宜的方法seekToBeginning（Collection）和seekToEnd（Collection）</p>
+<h4 id="消费者自己指定partition-以及消费者对partition消费"><a href="#消费者自己指定partition-以及消费者对partition消费" class="headerlink" title="消费者自己指定partition 以及消费者对partition消费"></a>消费者自己指定partition 以及消费者对partition消费</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">     String topic = &quot;foo&quot;;</div><div class="line">     TopicPartition partition0 = new TopicPartition(topic, 0);</div><div class="line">     TopicPartition partition1 = new TopicPartition(topic, 1);</div><div class="line">     consumer.assign(Arrays.asList(partition0, partition1));</div><div class="line">```     </div><div class="line">#### 消费者自己指定partition后提交后一次的消息</div></pre></td></tr></table></figure>
+<pre><code>try {
+    while(running) {
+        ConsumerRecords&lt;String, String&gt; records = consumer.poll(Long.MAX_VALUE);
+        for (TopicPartition partition : records.partitions()) {
+            List&lt;ConsumerRecord&lt;String, String&gt;&gt; partitionRecords = records.records(partition);
+            for (ConsumerRecord&lt;String, String&gt; record : partitionRecords) {
+                System.out.println(record.offset() + &quot;: &quot; + record.value());
+            }
+            long lastOffset = partitionRecords.get(partitionRecords.size() - 1).offset();
+            consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
+        }
+    }
+} finally {
+  consumer.close();
+}
+</code></pre><p>```</p>
 
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-安装Hive---属于一个小白的极速安装" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/12/23/安装Hive---属于一个小白的极速安装/">安装Hive---属于一个小白的极速安装</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/12/23/安装Hive---属于一个小白的极速安装/" class="article-date">
-  <time datetime="2017-12-23T14:28:00.000Z" itemprop="datePublished">2017-12-23</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="安装之前一定要注意三件事"><a href="#安装之前一定要注意三件事" class="headerlink" title="安装之前一定要注意三件事"></a>安装之前一定要注意三件事</h2><h3 id="1-元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接"><a href="#1-元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接" class="headerlink" title="1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接"></a>1. 元数据库是否正常，登陆，建表等操作，是否配置好了开放远程连接和开放localhost连接</h3><h3 id="2-hadoop的jline与hive包中的jline的版本是否一致"><a href="#2-hadoop的jline与hive包中的jline的版本是否一致" class="headerlink" title="2. hadoop的jline与hive包中的jline的版本是否一致"></a>2. hadoop的jline与hive包中的jline的版本是否一致</h3><h3 id="3-hdfs是不是正常，（比如安全模式之类的）"><a href="#3-hdfs是不是正常，（比如安全模式之类的）" class="headerlink" title="3. hdfs是不是正常，（比如安全模式之类的）"></a>3. hdfs是不是正常，（比如安全模式之类的）</h3><h2 id="解决这三件事"><a href="#解决这三件事" class="headerlink" title="解决这三件事"></a>解决这三件事</h2><p>把数据库修理好！如果jline版本不同，把hive包中的jline包拷贝到hadoop包中，hdfs不好使就接触安全模式，格式化等！</p>
-<h3 id="hive的三种安装模式"><a href="#hive的三种安装模式" class="headerlink" title="hive的三种安装模式"></a>hive的三种安装模式</h3><ol>
-<li>单机模式：自己瞎玩的模式，不需要元数据库，只要hdfs就行，此时的元数据放在hive内嵌的derby库里。还只能一个人登陆</li>
-<li>正常模式：很正经的一种模式，元数据存在本地机器的数据库中（Mysql、Oracle等）。其他正常。</li>
-<li>远程模式：很屌的一种模式，这时元数据放在一个远程的数据库中。其余和正常模式一样。</li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ps.元数据到底是啥玩意！</div><div class="line">元数据就是描述这个数据库里的数据长啥样的数据！描述什么字段名啊，长度啊，类型啊，大小啊等一系列信息</div><div class="line">假如一个人。数据就是他的零件器官！元数据就是这个人器官的医学描述报告！</div></pre></td></tr></table></figure>
-<h2 id="开搞！"><a href="#开搞！" class="headerlink" title="开搞！"></a>开搞！</h2><h3 id="第一步：老办法！当然是tar-zxvf-文件名-C-地址-啦"><a href="#第一步：老办法！当然是tar-zxvf-文件名-C-地址-啦" class="headerlink" title="第一步：老办法！当然是tar -zxvf 文件名 -C 地址 啦"></a>第一步：老办法！当然是tar -zxvf 文件名 -C 地址 啦</h3><h3 id="第二步：配置hive-env-sh-安装阿帕奇的东西多了就知道这货就是配置环境变量的"><a href="#第二步：配置hive-env-sh-安装阿帕奇的东西多了就知道这货就是配置环境变量的" class="headerlink" title="第二步：配置hive-env.sh(安装阿帕奇的东西多了就知道这货就是配置环境变量的)"></a>第二步：配置hive-env.sh(安装阿帕奇的东西多了就知道这货就是配置环境变量的)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">export JAVA_HOME=&#123;JDK安装位置&#125;</div><div class="line">export HADOOP_HOME=&#123;hadoop安装位置&#125;</div><div class="line">export HIVE_HOME=&#123;hive安装位置&#125;</div><div class="line">把这三个HOME写到最低下</div></pre></td></tr></table></figure>
-<h3 id="第三步：配置hive-log4j-properties（这步主要是跟上新时代）"><a href="#第三步：配置hive-log4j-properties（这步主要是跟上新时代）" class="headerlink" title="第三步：配置hive-log4j.properties（这步主要是跟上新时代）"></a>第三步：配置hive-log4j.properties（这步主要是跟上新时代）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">将EventCounter修改成org.apache.hadoop.log.metrics.EventCounter</div><div class="line">改之前</div><div class="line">#log4j.appender.EventCounter=org.apache.hadoop.hive.shims.HiveEventCounter</div><div class="line">改之后</div><div class="line">log4j.appender.EventCounter=org.apache.hadoop.log.metrics.EventCounter</div></pre></td></tr></table></figure>
-<h4 id="不改这一步就会一直提示"><a href="#不改这一步就会一直提示" class="headerlink" title="不改这一步就会一直提示"></a>不改这一步就会一直提示</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">WARNING: org.apache.hadoop.metrics.jvm.EventCounter is deprecated. Please use org.apache.hadoop.log.metrics.EventCounter in all the log4j.properties files.</div></pre></td></tr></table></figure>
-<h4 id="翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！"><a href="#翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！" class="headerlink" title="翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！"></a>翻译过来就是：FBI的警告！你的巴拉巴拉文件过时啦！</h4><h3 id="第四步：配置hive-site-xml"><a href="#第四步：配置hive-site-xml" class="headerlink" title="第四步：配置hive-site.xml"></a>第四步：配置hive-site.xml</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">&lt;configuration&gt;</div><div class="line">        &lt;property&gt;</div><div class="line">        &lt;name&gt;javax.jdo.option.ConnectionURL&lt;/name&gt;</div><div class="line">        &lt;value&gt;jdbc:mysql://localhost:3306/hivedb?createDatabaseIfNotExist=true&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        这是元数据库地址！ 我爱用mysql，所以端口是3306啦，后面create。。。</div><div class="line">		一堆就是如果数据库不存在就建一个</div><div class="line">        &lt;property&gt;</div><div class="line">        &lt;name&gt;javax.jdo.option.ConnectionDriverName&lt;/name&gt;</div><div class="line">        &lt;value&gt;com.mysql.jdbc.Driver&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        第五步的关键所在，jdbc的jar包配置</div><div class="line">        &lt;property&gt;</div><div class="line">        &lt;name&gt;javax.jdo.option.ConnectionUserName&lt;/name&gt;</div><div class="line">        &lt;value&gt;root&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        元数据库登录名</div><div class="line">        &lt;property&gt;</div><div class="line">        &lt;name&gt;javax.jdo.option.ConnectionPassword&lt;/name&gt;</div><div class="line">        &lt;value&gt;root&lt;/value&gt;</div><div class="line">        &lt;/property&gt;</div><div class="line">        元数据库登陆密码</div><div class="line">&lt;/configuration&gt;</div></pre></td></tr></table></figure>
-<h3 id="第五步：把jdbc的jar包拉近hive安装目录的lib下"><a href="#第五步：把jdbc的jar包拉近hive安装目录的lib下" class="headerlink" title="第五步：把jdbc的jar包拉近hive安装目录的lib下"></a>第五步：把jdbc的jar包拉近hive安装目录的lib下</h3><p>别给自己解释了。连linux基本操作都忘了，那就是失忆了！</p>
-<h2 id="运行！"><a href="#运行！" class="headerlink" title="运行！"></a>运行！</h2><p>运行bin/hive 这个是交互式shell</p>
-<p>运行bin/hiveserver2 前台服务器模式<br>运行nohup bin/hiveserver2 1&gt;/var/log/hiveserver.log 2&gt;/var/log/hiveserver.err &amp; 后台服务器模式</p>
-<p>这种服务器模式可以通过beeline的客户端来连它，只不过需要输入用户名<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">beeline&gt; !connect jdbc:hive2//haihan:10000</div><div class="line">（haihan是hiveserver2所启动的那台主机名，端口默认是10000）</div><div class="line">或者一次成：</div><div class="line">bin/beeline -u jdbc:hive2://haihan:10000 -n hadoop</div></pre></td></tr></table></figure></p>
-
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-zookeeper的个人理解和傻瓜式安装" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/12/21/zookeeper的个人理解和傻瓜式安装/">zookeeper的个人理解和傻瓜式安装</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/12/21/zookeeper的个人理解和傻瓜式安装/" class="article-date">
-  <time datetime="2017-12-21T02:34:00.000Z" itemprop="datePublished">2017-12-21</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="啥是zookeeper"><a href="#啥是zookeeper" class="headerlink" title="啥是zookeeper"></a>啥是zookeeper</h1><h2 id="zookeeper是一个集群分布式协调软件"><a href="#zookeeper是一个集群分布式协调软件" class="headerlink" title="zookeeper是一个集群分布式协调软件."></a>zookeeper是一个集群分布式协调软件.</h2><h3 id="zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性"><a href="#zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性" class="headerlink" title="zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性."></a>zookeeper自己就是一个集群，提供少量的数据的存储和管理以及提供对数据节点的监听、锁、同步功能可以把各个节点之间的数据同步，来保证一致性.</h3><h1 id="为啥会有zookeeper"><a href="#为啥会有zookeeper" class="headerlink" title="为啥会有zookeeper"></a>为啥会有zookeeper</h1><p>假设有三个应用，这三个应用共用一份配置信息。</p>
-<p>没有zookeeper的情况下，把配置信息放在一个服务器上,<br>并设定一把锁，在每次读写时只能一个应用来读写,<br>当这个服务器宕机时候，还需要另一个服务器做备用.</p>
-<p>这时，这几台服务器的数据同步问题，锁的问题，以及其他问题。都很难解决。<br>zookeeper就是解决这些麻烦的问题。</p>
-<p>当有zookeeper时，把这几个服务器<br>装上zookeeper!并把配置文件放在zookeeper里面就可以了</p>
-<h1 id="zookeeper的集群角色"><a href="#zookeeper的集群角色" class="headerlink" title="zookeeper的集群角色"></a>zookeeper的集群角色</h1><p>Leader（主节点）与Follower（从节点）<br>Leader控制写的操作，超过一半的节点更新成功，就确认更新成功。<br>在启动时候没有Leader与Follower的角色。通过选举来确定Leader</p>
-<h1 id="傻瓜式安装zookeeper"><a href="#傻瓜式安装zookeeper" class="headerlink" title="傻瓜式安装zookeeper"></a>傻瓜式安装zookeeper</h1><p>zookeeper搭建：<br>一个节点也可以 1、3、5、7</p>
-<h3 id="第一步修改zoo-cfg："><a href="#第一步修改zoo-cfg：" class="headerlink" title="第一步修改zoo.cfg："></a>第一步修改zoo.cfg：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">dataDir=&#123;zookeeper本地节点的工作目录&#125;</div><div class="line">dataLogDir=&#123;日志文件目录&#125;</div><div class="line">clientPort=2181 端口</div><div class="line">server.1=haihan:2888:3888</div><div class="line">server.2=gy:2888:3888</div><div class="line">server.3=clone_gy:2888:3888</div><div class="line">tickTime=&#123;心跳感知的间隔时间,一般默认为2000&#125;</div><div class="line">initLimit=&#123;两个节点超过的心跳感应次数 默认10&#125;</div><div class="line">syncLimit=&#123;Follower对Leader发送相应超过数，超过了这个就认为失联 默认为5&#125;</div></pre></td></tr></table></figure>
-<h3 id="第二步"><a href="#第二步" class="headerlink" title="第二步"></a>第二步</h3><p>在dataDir下建立工作文件夹data并在里面新建一个myid文件，内容为1</p>
-<p>依次类推。第二台为2</p>
-<p>myid必须与zoo.cfg中最后三行对应</p>
-<h2 id="启动zookeeper"><a href="#启动zookeeper" class="headerlink" title="启动zookeeper"></a>启动zookeeper</h2><p>bin下<br>./zkserver.sh start<br>几台机器依次启动</p>
-<p>进程名为 QuorumPeerMain</p>
-
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-Hbase的理解要点" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/12/21/Hbase的理解要点/">Hbase的理解要点</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/12/21/Hbase的理解要点/" class="article-date">
-  <time datetime="2017-12-21T02:14:00.000Z" itemprop="datePublished">2017-12-21</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="Hbase：-Hadoop-database-的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据"><a href="#Hbase：-Hadoop-database-的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据" class="headerlink" title="Hbase： Hadoop database 的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据"></a>Hbase： Hadoop database 的简称，也就是基于Hadoop数据库，是nosql数据库，主要用于查询和显示各种数据</h2><h3 id="与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。"><a href="#与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。" class="headerlink" title="与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。"></a>与Hive的区别：Hive则是Hadoop数据仓库，主要是写SQL来计算和处理HDFS上的结构化数据，用于离线的海量数据计算。</h3><h3 id="hbase也是基于hdfs存储的。它集群中的角色是："><a href="#hbase也是基于hdfs存储的。它集群中的角色是：" class="headerlink" title="hbase也是基于hdfs存储的。它集群中的角色是："></a>hbase也是基于hdfs存储的。它集群中的角色是：</h3><h4 id="主：HMaster-从：HRegionnserver"><a href="#主：HMaster-从：HRegionnserver" class="headerlink" title="主：HMaster 从：HRegionnserver"></a>主：HMaster 从：HRegionnserver</h4><p>HMaster不存任何数据，只负责感知管理regionserver。<br>和负载均衡当集群启动，表创建完毕 HMaster挂了也没事</p>
-<h2 id="Hbase的表结构："><a href="#Hbase的表结构：" class="headerlink" title="Hbase的表结构："></a>Hbase的表结构：</h2><h3 id="建表时不需要限定表中的字段，只需要指定若干列族！"><a href="#建表时不需要限定表中的字段，只需要指定若干列族！" class="headerlink" title="建表时不需要限定表中的字段，只需要指定若干列族！"></a>建表时不需要限定表中的字段，只需要指定若干列族！</h3><p>插入数据时，列族中可以存储任意多个列！(列名(key)，值(value))<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">例（baseinfo基本信息、extrainfo其他信息）</div><div class="line">插入时，先插入行键0001 (行键是唯一的)再插入baseinfo</div><div class="line">在baseinfo中插入类似key、value的结构&lt;name：gaoyuan&gt;&lt;age:18&gt;&lt;career:student&gt;</div><div class="line">再插入记录时，可以和上一行的不一样。&lt;name：chaoren&gt;&lt;age:28&gt;&lt;xueli:benke&gt;&lt;jiguan:bj&gt;</div></pre></td></tr></table></figure></p>
-<h3 id="一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳"><a href="#一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳" class="headerlink" title="一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳"></a>一个value可以有多个版本，通过版本号来确认，通常版本号就是一个时间戳</h3><p>要查询一个具体字段的值，就需要指定坐标：表名—行键—-列族（ColumnFamliy）：列名（Qualifier）—版本</p>
-<h2 id="Hbase的存储机制："><a href="#Hbase的存储机制：" class="headerlink" title="Hbase的存储机制："></a>Hbase的存储机制：</h2><h4 id="把表切开存放，把某一个列族（store）下面的若干行切出region"><a href="#把表切开存放，把某一个列族（store）下面的若干行切出region" class="headerlink" title="把表切开存放，把某一个列族（store）下面的若干行切出region"></a>把表切开存放，把某一个列族（store）下面的若干行切出region</h4><h4 id="region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中"><a href="#region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中" class="headerlink" title="region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中"></a>region和region之间在hbase的集群当中管理，集群中有好多regionserver。region就在regionserver中</h4><h4 id="切分成region-table-1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行"><a href="#切分成region-table-1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行" class="headerlink" title="切分成region_table_1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行"></a>切分成region_table_1文件存在hdfs中，所以datanode和regionserver建议在一台机器上运行</h4><h4 id="可以减少很多网络传输问题"><a href="#可以减少很多网络传输问题" class="headerlink" title="可以减少很多网络传输问题"></a>可以减少很多网络传输问题</h4><h2 id="Hbase的寻址机制："><a href="#Hbase的寻址机制：" class="headerlink" title="Hbase的寻址机制："></a>Hbase的寻址机制：</h2><h4 id="Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键"><a href="#Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键" class="headerlink" title="Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键"></a>Hbase有个系统表（META表）。记录了一个region起始的行键的值到终止行键的值作为行键</h4><p>内容为region文件在哪个机器上的ip地址.<br>一个region就在这个系统表中产生记录.</p>
-<p>这个表的体积大到一定程度也需要再分.<br>再分出的信息还需要一个表（ROOT表）来存储它的行键范围和文件地址数据</p>
-<p>ROOT表也在某一个regionserver中，具体位置应该在zookeeper上查<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">例如：要查行键的10001 现在zookeeper上查找root表的位置，找到root表中的某一行</div><div class="line">再找到meta表中的一行，最后找到用户表中的region文件地址，再找到对应行键的记录</div></pre></td></tr></table></figure></p>
-<p>一个用户的数据表会被切分成很多region，然后分别存在很多不同的regionserver上再存在HDFS上<br>manstore 是一个存储访问量多的数据</p>
-
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-一次成之安装Hbase" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/12/21/一次成之安装Hbase/">一次成之安装Hbase</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/12/21/一次成之安装Hbase/" class="article-date">
-  <time datetime="2017-12-21T01:49:00.000Z" itemprop="datePublished">2017-12-21</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="tar-zxvf-hbase-tar-gz-解压后-进入conf"><a href="#tar-zxvf-hbase-tar-gz-解压后-进入conf" class="headerlink" title="tar -zxvf hbase.tar.gz 解压后 进入conf"></a>tar -zxvf hbase.tar.gz 解压后 进入conf</h2><h3 id="修改Hbase-env-sh"><a href="#修改Hbase-env-sh" class="headerlink" title="修改Hbase-env.sh"></a>修改Hbase-env.sh</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">export JAVA_HOME=/usr/JAVA/jdk1.8.0_121</div><div class="line">JAVA的路径，按照/etc/profile里面来就行</div><div class="line"></div><div class="line">export JAVA_CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar</div><div class="line">JAVA的环境变量</div><div class="line"></div><div class="line">export HBASE_MANAGES_ZK=false</div><div class="line">这个参数为true时，Hbase会用自己内置的单机版zookeeper</div><div class="line">为false时，会用用户的zookeeper。</div></pre></td></tr></table></figure>
-<h3 id="修改Hbase-site-xml"><a href="#修改Hbase-site-xml" class="headerlink" title="修改Hbase-site.xml"></a>修改Hbase-site.xml</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.master&lt;/name&gt;</div><div class="line">&lt;value&gt;haihan:60010&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">master的位置</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.master.maxclockskew&lt;/name&gt;</div><div class="line">&lt;value&gt;180000&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">主和从检查心跳的间隔时间</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.rootdir&lt;/name&gt;</div><div class="line">&lt;value&gt;hdfs://haihan:9000/hbase&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">hbase在hdfs的目录位置</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.cluster.distributed&lt;/name&gt;</div><div class="line">&lt;value&gt;true&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">是否为集群</div><div class="line"></div><div class="line">必要</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.zookeeper.quorum&lt;/name&gt;</div><div class="line">&lt;value&gt;haihan：2181,gy：2181,clone_gy：2181&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">zookeeper的机器名</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hbase.zookeeper.property.dataDir&lt;/name&gt;</div><div class="line">&lt;value&gt;/home/ghadoop/apps/hbase/tmp/zookeeper&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">临时数据文件位置</div></pre></td></tr></table></figure>
-<p>然后进入bin/start-Hbase.sh开就行了<br>关就是stop-hbase.sh</p>
-<h3 id="启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010-如果都不好使就netstat-nltp看看"><a href="#启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010-如果都不好使就netstat-nltp看看" class="headerlink" title="启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010 如果都不好使就netstat -nltp看看"></a>启动之前必须开hdfs！必须开zookeeper！想看网页端口就是60010和16010 如果都不好使就netstat -nltp看看</h3>
       
 
       

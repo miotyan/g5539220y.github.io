@@ -28,6 +28,277 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-关于MapReduce的所有个人理解" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/11/关于MapReduce的所有个人理解/">关于MapReduce的所有个人理解</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/11/关于MapReduce的所有个人理解/" class="article-date">
+  <time datetime="2017-12-11T10:14:00.000Z" itemprop="datePublished">2017-12-11</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"><a href="#MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。" class="headerlink" title="MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。"></a>MapReduce是一个框架，它将所写的逻辑和运算过程并发执行在hadoop集群上。</h1><h3 id="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"><a href="#mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）" class="headerlink" title="mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）"></a>mr程序两个阶段，map（独立并发，文件切片，归类）reduce（汇聚，计算）</h3><h3 id="运行mr程序有三个进程"><a href="#运行mr程序有三个进程" class="headerlink" title="运行mr程序有三个进程"></a>运行mr程序有三个进程</h3><ol>
+<li>MRAppMaster：负责整个程序的过程调度及状态协调</li>
+<li>mapTask：负责map阶段的数据处理流程</li>
+<li>ReduceTask：负责reduce阶段的数据处理流程</li>
+</ol>
+<h2 id="mr程序运行第一步：文件切片"><a href="#mr程序运行第一步：文件切片" class="headerlink" title="mr程序运行第一步：文件切片"></a>mr程序运行第一步：文件切片</h2><p>文件的切片是由FileInputFormat实现类的getSplits()方法完成，先读取目录，然后遍历所有文件，获取文件大小fs.sizeOf(文件名),计算切片大小<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">computerSplitSize(Math.max(minSize.Math.max(maxSize.blocksize))=blocksize=128M</div></pre></td></tr></table></figure></p>
+<p>blocksize 默认128M，hdfs一个文件的大小，mr程序为了防止不必要的网络传输问题，默认设置为和hdfs中的文件切片一样大</p>
+<p>比如：</p>
+<blockquote>
+<p>有两个文件 gy.txt 大小为 200M haihan.txt 大小为8M </p>
+</blockquote>
+<p>切片后为</p>
+<blockquote>
+<p>gy.txt.split1 0~128M  gy.txt.split2 128M~200M haihan.txt.split 0~8M</p>
+</blockquote>
+<p>由此可见，小文件越多效率越低，注意上传文件时的合并或写一个小mr文件来合并、或者用Inputformat中的CombineInputFormat。</p>
+<p>如果文件太大了，就把hdfs上的切片blocksize变大</p>
+<blockquote>
+<h4 id="设置reduce运行个数"><a href="#设置reduce运行个数" class="headerlink" title="设置reduce运行个数"></a>设置reduce运行个数</h4><p>job.setNumReduceTasks(4);</p>
+</blockquote>
+<p>如设置的数据分布不均匀，就有可能在reduce阶段产生数据倾斜（好多数据都跑一个reducetask里面了）<br>注意： reducetask数量并不是任意设置，还要考虑业务逻辑需求，有些情况下，需要计算全局汇总结果，就只能有1个reducetask</p>
+<blockquote>
+<p>尽量不要运行太多的reduce task。对大多数job来说，最好rduce的个数最多和集群中的reduce持平，或者比集群的 reduce slots小。这个对于小集群而言，尤其重要。</p>
+</blockquote>
+<p>运行后的maptask调用Inputformat （这货是个抽象类有好多实现 mr程序主要用 FileInputformat下的TextInputFormat（文本文件）和SequenceFileInpitFormat(））InputFormat调用RecordReader来读文件切切切，读好后传给map方法。</p>
+<h2 id="mr程序运行第二步："><a href="#mr程序运行第二步：" class="headerlink" title="mr程序运行第二步："></a>mr程序运行第二步：</h2><p>调用map方法拿到kv对，运行map逻辑后（map逻辑是由自己瞎写的跟人家框架没关系），通过context.write写出到内部组件OutPutCollector（收集器~框架给的咱们动不了）</p>
+<h2 id="mr程序运行第三步："><a href="#mr程序运行第三步：" class="headerlink" title="mr程序运行第三步："></a>mr程序运行第三步：</h2><p>OutPutCollector把自己瞎写的逻辑以及自己定义的输出 输出到一个环形缓冲区（这个内存一共默认100M，学名环形缓冲区内存，就是个环形数组队列！但只能写80%）<br>spiller这个东西负责把缓冲区分区并把数据排序并溢出到文件到内存中，排序用内存就是用剩下那个20%。</p>
+<p>spiller这个分区就是Partitoner 默认为HashPartitioner （HashCode Mod 2）</p>
+<p>排序则是快速排序KeycomparorTo，这里所有的排序都是以key来排序</p>
+<p>比如：</p>
+<blockquote>
+<p>排序前：a1，c1，b1，a1，b1 排序后：（a1，a1，c1）（b1，b1）</p>
+</blockquote>
+<p>然后从内存写出来写到文件中（溢出一次写一次，产生一个文件，可能为多个文件）文件就在maptask工作目录里面，溢出的结果都是分区且区内有序的。<br>当最后一次溢出完，把剩下的没满的一次溢出。溢出后marge（归并）成一个大文件。</p>
+<h3 id="效率提高大法：conbiner组件（预先reduce）"><a href="#效率提高大法：conbiner组件（预先reduce）" class="headerlink" title="效率提高大法：conbiner组件（预先reduce）"></a>效率提高大法：conbiner组件（预先reduce）</h3><p>为了防止在溢出reduce时过慢，conbiner组件可以在mapTask本地时将文件进行reduce 以及在合并文件后进行reduce<br>这个可以自定义！！！！！！</p>
+<h2 id="mr程序运行第四步："><a href="#mr程序运行第四步：" class="headerlink" title="mr程序运行第四步："></a>mr程序运行第四步：</h2><p>说明：reduceTask的数量与spiller分的区没有直接关系，reduceTask的数量由我自己定的或框架默认。当然要想办法让它们对应起来</p>
+<p>比如：</p>
+<blockquote>
+<p>key.hashCode % numreduce</p>
+</blockquote>
+<p>reduceTask下载mapTask归并的文件到reduceTask的机器本地磁盘目录，然后再次合并</p>
+<p>比如：</p>
+<blockquote>
+<p>a1，a1，c1，b1，b1</p>
+</blockquote>
+<p>此时reducer中的reduce方法调用</p>
+<h3 id="GroupingComparor（k，next-k）"><a href="#GroupingComparor（k，next-k）" class="headerlink" title="GroupingComparor（k，next k）"></a>GroupingComparor（k，next k）</h3><p>方法来判断谁和谁相同，可以自己定义文件中的k相同,传入k和v的迭代器，把所有相同的k合并成一个k，这个k带一组v<br>然后context.write()</p>
+<h3 id="mr程序运行第五步："><a href="#mr程序运行第五步：" class="headerlink" title="mr程序运行第五步："></a>mr程序运行第五步：</h3><p>reduceTask调用OutputFormat中的TextOutputFormat，RecordWriter write（k，v）写到HDFS中，名字为part-1-000000</p>
+<h2 id="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"><a href="#shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！" class="headerlink" title="shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！"></a>shuffer就是输出到缓冲区开始一直到reducer调用reduce之前！</h2><p>听着很屌其实就是那么一回事</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-拯救笔记----流量汇总排序mr程序" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/12/11/拯救笔记----流量汇总排序mr程序/">拯救笔记----流量汇总排序mr程序</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/11/拯救笔记----流量汇总排序mr程序/" class="article-date">
+  <time datetime="2017-12-11T03:45:00.000Z" itemprop="datePublished">2017-12-11</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="需求：对一段网络流量日志进行清洗，然后排序输出"><a href="#需求：对一段网络流量日志进行清洗，然后排序输出" class="headerlink" title="需求：对一段网络流量日志进行清洗，然后排序输出"></a>需求：对一段网络流量日志进行清洗，然后排序输出</h2><h3 id="map阶段"><a href="#map阶段" class="headerlink" title="map阶段"></a>map阶段</h3><pre><code>String line = value.toString();
+String[] fields = line.split(&quot;\t&quot;);
+long num =Long.parseLong(fields[1]);
+long up = Long.parseLong(fields[fields.length-1]);
+long down = Long.parseLong(fields[fields.length-2]);
+IntWritable V = new IntWritable(1);
+flowbean K = new flowbean(up, down,num);
+context.write(K,V);
+</code></pre><h3 id="超级垃圾无脑版本代码-就是切切切-然后构造一个bean"><a href="#超级垃圾无脑版本代码-就是切切切-然后构造一个bean" class="headerlink" title="超级垃圾无脑版本代码 就是切切切 然后构造一个bean"></a>超级垃圾无脑版本代码 就是切切切 然后构造一个bean</h3><h3 id="把上传流量和下载流量还有手机号传进去"><a href="#把上传流量和下载流量还有手机号传进去" class="headerlink" title="把上传流量和下载流量还有手机号传进去"></a>把上传流量和下载流量还有手机号传进去</h3><h3 id="实验了几次，发现map阶段不能传空值！new了一个-IntWritable-过去。"><a href="#实验了几次，发现map阶段不能传空值！new了一个-IntWritable-过去。" class="headerlink" title="实验了几次，发现map阶段不能传空值！new了一个 IntWritable 过去。"></a>实验了几次，发现map阶段不能传空值！new了一个 IntWritable 过去。</h3><h3 id="为了防止new的IntWritable对象太多，就传一个了。"><a href="#为了防止new的IntWritable对象太多，就传一个了。" class="headerlink" title="为了防止new的IntWritable对象太多，就传一个了。"></a>为了防止new的IntWritable对象太多，就传一个了。</h3><h4 id="内部过程"><a href="#内部过程" class="headerlink" title="内部过程"></a>内部过程</h4><p>flowbean,1</p>
+<p>flowbean,1</p>
+<p>flowbean,1</p>
+<p>flowbean,1<br>每个flowbean对象都不等，不用担心到reduce阶段合并的问题。</p>
+<h3 id="对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。"><a href="#对于排序-在flowbean类中实现WritableComparable接口-然后重写compareTo方法，在compareTo里面写排序逻辑。" class="headerlink" title="对于排序 在flowbean类中实现WritableComparable接口 然后重写compareTo方法，在compareTo里面写排序逻辑。"></a>对于排序 在flowbean类中实现WritableComparable<t>接口 然后重写compareTo方法，在compareTo里面写排序逻辑。</t></h3><h3 id="reduce阶段"><a href="#reduce阶段" class="headerlink" title="reduce阶段"></a>reduce阶段</h3><h4 id="直接无脑输出！"><a href="#直接无脑输出！" class="headerlink" title="直接无脑输出！"></a>直接无脑输出！</h4><pre><code>context.write(key, null);
+</code></pre><h4 id="这次可以用空值搞定了！"><a href="#这次可以用空值搞定了！" class="headerlink" title="这次可以用空值搞定了！"></a>这次可以用空值搞定了！</h4><h2 id="出现的麻烦"><a href="#出现的麻烦" class="headerlink" title="出现的麻烦"></a>出现的麻烦</h2><h3 id="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"><a href="#每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番" class="headerlink" title="每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番"></a>每次看结果里的num变量出不来！难道必须把电话号写出来才行？又仔细的回想了一遍过程，疯狂的google了一番</h3><h3 id="最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！"><a href="#最后发现flowbean中-Writable-的实现方法-write和readFields-方法中没把num变量写进去。尴尬的一b！" class="headerlink" title="最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！"></a>最后发现flowbean中 Writable 的实现方法 write和readFields 方法中没把num变量写进去。尴尬的一b！</h3><h3 id="Ps：write和readFields-这俩方法中的变量必须按顺序写！"><a href="#Ps：write和readFields-这俩方法中的变量必须按顺序写！" class="headerlink" title="Ps：write和readFields 这俩方法中的变量必须按顺序写！"></a>Ps：write和readFields 这俩方法中的变量必须按顺序写！</h3>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-关于JAVA的一些小记" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/09/25/关于JAVA的一些小记/">关于JAVA的一些小记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/09/25/关于JAVA的一些小记/" class="article-date">
+  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="1-线程调用-run-和-start-的-区别"><a href="#1-线程调用-run-和-start-的-区别" class="headerlink" title="1.线程调用 run 和 start 的 区别"></a>1.线程调用 run 和 start 的 区别</h2><p>调用run方法，其本质就是一个普通方法的调用，不会开启新的线程。</p>
+<p>调用start方法，才会开启一个线程来执行run里面的方法</p>
+<h2 id="2-使用Thread和Runnable的区别"><a href="#2-使用Thread和Runnable的区别" class="headerlink" title="2.使用Thread和Runnable的区别"></a>2.使用Thread和Runnable的区别</h2><p>Thread：先继承Thread，然后通过new来实现类</p>
+<p>Runnable：先继承Runnable，然后new Thread(new 实现类的对象,线程名)</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-正式安装hadoop" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/09/25/正式安装hadoop/">正式安装hadoop！！！</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/09/25/正式安装hadoop/" class="article-date">
+  <time datetime="2017-09-25T15:22:00.000Z" itemprop="datePublished">2017-09-25</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="正式安装hadoop！！！"><a href="#正式安装hadoop！！！" class="headerlink" title="正式安装hadoop！！！"></a>正式安装hadoop！！！</h1><p>在进行 tar 解压hadooptar包之后</p>
+<h2 id="1-认识目录"><a href="#1-认识目录" class="headerlink" title="1. 认识目录"></a>1. 认识目录</h2><h3 id="bin"><a href="#bin" class="headerlink" title="bin/"></a>bin/</h3><p>hadoop自己的操作命令</p>
+<p>###sbin/<br>启动集群的管理命令</p>
+<p>###etc/<br>配置文件</p>
+<p>###lib/<br>C语言的本地库</p>
+<p>###include/<br>支持的C语言库</p>
+<p>###share/<br>JAR包和文档</p>
+<h2 id="2-开始配置"><a href="#2-开始配置" class="headerlink" title="2.开始配置"></a>2.开始配置</h2><p>###进入etc： cd hadoop的安装位置/etc/hadoop<br>参数格式(接下来统一用name：。。和value：。。来标注）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;&lt;/name&gt;</div><div class="line">&lt;value&gt;&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div></pre></td></tr></table></figure></p>
+<h4 id="配置hadoop-env-sh"><a href="#配置hadoop-env-sh" class="headerlink" title="配置hadoop-env.sh"></a>配置hadoop-env.sh</h4><p>这里主要是运行时所需要的环境变量主要也就是JAVA_HOME的位置</p>
+<p> The java implementation to use<br> export JAVA_HOME=你的java安装位置 不知道就echo $JAVA_HOME</p>
+<h4 id="配置core-site-xml"><a href="#配置core-site-xml" class="headerlink" title="配置core-site.xml"></a>配置core-site.xml</h4><ul>
+<li><p>name:   fs.defaultFS</p>
+</li>
+<li><p>value:  hdfs://g1:9000</p>
+</li>
+</ul>
+<p>说明:指定hadoop的文件系统以及namemode的地址</p>
+<ul>
+<li><p>name:   hadoop.tmp.dir</p>
+</li>
+<li><p>value:  /home/hadoop/hadoopdata</p>
+</li>
+</ul>
+<p>说明:配置进程产生数据的路径（具体路径具体设置)</p>
+<h4 id="配置hdfs-site-xml-也可以啥也不管，这个有默认设置-这里举两个例子省着忘）"><a href="#配置hdfs-site-xml-也可以啥也不管，这个有默认设置-这里举两个例子省着忘）" class="headerlink" title="配置hdfs-site.xml(也可以啥也不管，这个有默认设置.这里举两个例子省着忘）"></a>配置hdfs-site.xml(也可以啥也不管，这个有默认设置.这里举两个例子省着忘）</h4><p>例1</p>
+<ul>
+<li><p>name:   dfs.blocksize</p>
+</li>
+<li><p>value:  134217728(128MB)</p>
+</li>
+</ul>
+<p>说明:文件拆分块的大小</p>
+<p>例2</p>
+<ul>
+<li><p>name:   dfs.replication</p>
+</li>
+<li><p>value:  2</p>
+</li>
+</ul>
+<p>说明:客户端放在hdfs的文件副本数(此处设置2份)</p>
+<h4 id="配置mapred-site-xml"><a href="#配置mapred-site-xml" class="headerlink" title="配置mapred-site.xml"></a>配置mapred-site.xml</h4><ul>
+<li><p>name:   mapreduce.framework.name</p>
+</li>
+<li><p>value:  yarn</p>
+</li>
+</ul>
+<p>说明:mapreduce运行平台的配置，平台名称为local时是无集群单机版的hadoop</p>
+<h4 id="配置yarn-site-xml"><a href="#配置yarn-site-xml" class="headerlink" title="配置yarn-site.xml"></a>配置yarn-site.xml</h4><ul>
+<li><p>name:   yarn.resourcemanager.hostname</p>
+</li>
+<li><p>value:  g1   (主机名)</p>
+</li>
+</ul>
+<p>说明:配置yarn的resourcemanager的机器</p>
+<ul>
+<li><p>name:   yarn.nodemanager.aux-services</p>
+</li>
+<li><p>value:  mapreduce_shuffle</p>
+</li>
+</ul>
+<p>说明:reducer获取数据的方式</p>
+<h4 id="最后配置slaves"><a href="#最后配置slaves" class="headerlink" title="最后配置slaves"></a>最后配置slaves</h4><p>此文件是启动脚本获取datanode地址的，在配置好/etc/hosts后，在此加入datanode就可以。直接写域名，不写IP地址</p>
+<h1 id="启动之前"><a href="#启动之前" class="headerlink" title="启动之前"></a>启动之前</h1><p>··· </p>
+<p>#一定一定一定要关闭防火墙！！重要！！！<br>···</p>
+<h5 id="首先格式化HDFS：hadoop-namenode-format"><a href="#首先格式化HDFS：hadoop-namenode-format" class="headerlink" title="首先格式化HDFS：hadoop namenode -format"></a>首先格式化HDFS：hadoop namenode -format</h5><p>(使用这句话之前要配置hadoop的环境变量，在/etc/profile末尾写上<br>export HADOOP_HOME=/home/ghadoop/apps/hadoop-2.6.4<br>export PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin)</p>
+<h5 id="然后启动脚本-start-dfs-sh-只启动hdfs-start-all-sh-全部启动-或-hadoop-dameon-sh-start-namenode-只启动namenode的单个启动，把namenode换成datanode就是单个启动datanode"><a href="#然后启动脚本-start-dfs-sh-只启动hdfs-start-all-sh-全部启动-或-hadoop-dameon-sh-start-namenode-只启动namenode的单个启动，把namenode换成datanode就是单个启动datanode" class="headerlink" title="然后启动脚本 start-dfs.sh(只启动hdfs) start-all.sh(全部启动) 或 hadoop-dameon.sh start namenode(只启动namenode的单个启动，把namenode换成datanode就是单个启动datanode)"></a>然后启动脚本 start-dfs.sh(只启动hdfs) start-all.sh(全部启动) 或 hadoop-dameon.sh start namenode(只启动namenode的单个启动，把namenode换成datanode就是单个启动datanode)</h5>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-Linux安装hadoop前的配置" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">

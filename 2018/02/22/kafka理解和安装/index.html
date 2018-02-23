@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>kafka理解和安装 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="#kafka是一个缓存数据的系统。 (Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)###kafka是一个分布式的消息缓存系统。由Scala写成。 ###一个生产者消费者模型。类似与JMS的特性    #kafka基本理解  类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产">
+<meta name="keywords" content="kafka">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kafka理解和安装">
+<meta property="og:url" content="http://yoursite.com/2018/02/22/kafka理解和安装/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="#kafka是一个缓存数据的系统。 (Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)###kafka是一个分布式的消息缓存系统。由Scala写成。 ###一个生产者消费者模型。类似与JMS的特性    #kafka基本理解  类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产">
+<meta property="og:updated_time" content="2018-02-22T14:39:37.118Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kafka理解和安装">
+<meta name="twitter:description" content="#kafka是一个缓存数据的系统。 (Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)###kafka是一个分布式的消息缓存系统。由Scala写成。 ###一个生产者消费者模型。类似与JMS的特性    #kafka基本理解  类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。 数据生产者messageProducer：只负责数据生产，生产">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-kafka理解和安装" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      kafka理解和安装
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/22/kafka理解和安装/" class="article-date">
+  <time datetime="2018-02-22T14:39:00.000Z" itemprop="datePublished">2018-02-22</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>#kafka是一个缓存数据的系统。</p>
+<h2 id="Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算"><a href="#Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算" class="headerlink" title="(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)"></a>(Storm、Sparkstreaming用过消费（获取）kafka的数据进行计算)</h2><p>###kafka是一个分布式的消息缓存系统。由Scala写成。</p>
+<p>###一个生产者消费者模型。类似与JMS的特性  </p>
+<hr>
+<p>#kafka基本理解</p>
+<ol>
+<li>类JMS（把点对点和发布订阅模式结合了）消费者可以多个，并且主动拉取数据。</li>
+<li>数据生产者messageProducer：只负责数据生产，生产者的代码可以集成到任何系统中。<pre><code>数据分发策略由producer决定。默认是defaultPartition Utils.abs(key.hashCode)%numPartitions
+</code></pre></li>
+<li><p>数据消费者messageConsumer（增加MessageGroup）：可以有多个。每个consumer消费的数据都是一样的。consumer的组（consumerGroup），可以把多个consumer线程划分一个组，组里面的所有成员共同消费一个topic数据，组员之间不重复消费</p>
+</li>
+<li><p>数据的分类，主题：topic、destination（消息发送的目的地。本质Queue）<br>topic：目标发送的目的地。这是一个逻辑概念。落到磁盘上是一个partition目录。partition的目录中有多个segment组合（index，log），一个topic对应多个partition。一个partition对应多个segment组合。一个segment默认1G。</p>
+<pre><code>每个parttiion可以设置多个副本（参数：--replication-factor 副本数）,所有的读写操作都是通过选举出一个leader来进行的。和mysql有区别，mesql做主从是读写分离。kafka中读写都是leader
+</code></pre></li>
+<li>broker（中间人）：管理保存数据的进程，只管数据存储，不管是谁生产，是谁消费。在集群中必须有个blockid</li>
+<li>数据的分片分组：Partition，有多个，不同机器上有不同的机器的副本。数据生产到集群中的那一个parttion由生产者决定（Key的Hash算法）<br>每个parttiion是一个大文件 切割成小文件存在集群中</li>
+</ol>
+<p>一个组中的数据最好和分片数对应，一个分片对应一个组中的消费成员<br>如果组中的成员太多，必然会有成员空闲。</p>
+<p>##partition数量和broker数量关系</p>
+<p>###每个parttion数据如何保存到硬盘</p>
+<p>###面试题:如何保证消费者消费的数据是有序的</p>
+<ol>
+<li>生产者集群模式有序号管理器</li>
+<li>blocker端只设置一个partition</li>
+<li>consumer如果是一个组，如何保证消费者有序—&gt;消费者线程里自定义一个数据结构来排序<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">一个partition的数据是间断性有序的，不连续</div><div class="line">针对一个tipic里的数据，只能做到partition内部有序，不能做到全局有序</div><div class="line">只有一种情况---&gt; 就是只有一个partition</div><div class="line">考虑kafka并发下的负载均衡</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>###Kafka集群结构</p>
+<ol>
+<li>kafka集群的服务器都叫broker。kafka有两类客户端（messageProducer、messageConsumer)</li>
+<li>客户端和服务器之间采用TCP服务器连接</li>
+<li>kafka中不同的业务的消息通过topic进行区分。而且每一个消息topic都会被分区，以分担消息读写的负载</li>
+<li>每一个分区都可以有多个副本，以防止数据的丢失。每一个分区中的数据如果需要更新都必须通过该分区所有副本中的leader来更新！</li>
+</ol>
+<p>###Kafka在消费者中标记信息<br>kafka消费者在集群中分组，</p>
+<ul>
+<li><p>比如两个消费者共同消费一个topic：order_info，A和B所消费的消息不会重复<br>比如 order_inf中有100条消息，每个消息id，编号从0-99 消费者A消费0-49 消费者B就消耗50-99</p>
+</li>
+<li><p>消费者在具体消费某个topic中的消息时，可以指定起始偏移量</p>
+</li>
+<li><p>消息的格式可以是javabean、json、xml</p>
+</li>
+</ul>
+<h1 id="kafka安装"><a href="#kafka安装" class="headerlink" title="kafka安装"></a>kafka安装</h1><h2 id="集群安装"><a href="#集群安装" class="headerlink" title="集群安装"></a>集群安装</h2><ol>
+<li>解压</li>
+<li><p>修改server.properties</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">broker.id=1</div><div class="line">log.dirs=&#123;日志目录&#125;</div><div class="line">zookeeper.connect=weekend05:2181,weekend06:2181,weekend07:2181</div></pre></td></tr></table></figure>
+</li>
+<li><p>将zookeeper集群启动</p>
+</li>
+<li><p>在每一台节点上启动broker<br>bin/kafka-server-start.sh config/server.properties</p>
+</li>
+<li><p>在kafka集群中创建一个topic<br>bin/kafka-topics.sh –create –zookeeper haihan:2181 –replication-factor 3 –partitions 1 –topic gy_noTopic</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">bin/kafka-topics.sh --create --zookeeper haihan:2181  //zookeeper地址 </div><div class="line">--replication-factor 3  //副本数量为3  </div><div class="line">--partitions 1          //分区数   </div><div class="line">--topic gy_noTopic      //话题名</div></pre></td></tr></table></figure>
+</li>
+<li><p>用一个producer向某一个topic中写入消息 bin/kafka-console-producer.sh –broker-list haihan:9092 –topic gy_noTopic</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">bin/kafka-console-producer.sh --broker-list haihan:9092  //broker地址 </div><div class="line">--topic gy_noTopic   //话题名</div></pre></td></tr></table></figure>
+<p>7.用一个comsumer从某一个topic中读取信息<br>bin/kafka-console-consumer.sh –zookeeper haihan:2181 –from-beginning –topic gy_noTopic</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">bin/kafka-console-consumer.sh --zookeeper haihan:2181 //zookeeper地址</div><div class="line">--from-beginning    //是否显示历史消息</div><div class="line">--topic gy_noTopic     //话题名</div></pre></td></tr></table></figure>
+<p>8.查看一个topic的分区及副本状态信息<br>bin/kafka-topics.sh –describe –zookeeper haihan:2181 –topic order<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">bin/kafka-topics.sh --describe --zookeeper haihan:2181 //zookeeper地址</div><div class="line">--topic gy_noTopic      //话题名</div></pre></td></tr></table></figure></p>
+<h4 id="消息含义-Replicas-副本在集群的broker-id、leader-副本在集群中的leader（通过选举）、Isr-同步状态"><a href="#消息含义-Replicas-副本在集群的broker-id、leader-副本在集群中的leader（通过选举）、Isr-同步状态" class="headerlink" title="消息含义:Replicas 副本在集群的broker.id、leader 副本在集群中的leader（通过选举）、Isr 同步状态"></a>消息含义:Replicas 副本在集群的broker.id、leader 副本在集群中的leader（通过选举）、Isr 同步状态</h4><ol>
+<li>查看已创建话题<br>bin/kafka-topics.sh –list –zookeeper haihan:2181</li>
+</ol>
+<h3 id="面试题警告！"><a href="#面试题警告！" class="headerlink" title="面试题警告！"></a>面试题警告！</h3><h4 id="kafka消费者读操作为什么快"><a href="#kafka消费者读操作为什么快" class="headerlink" title="kafka消费者读操作为什么快"></a>kafka消费者读操作为什么快</h4><p>消费者先从PageCache（内存）中查找，如果发生缺页才进行磁盘查找</p>
+<p>最终返回实际数据，PageCache本质就是把尽可能多的空闲内存当磁盘缓存来用。</p>
+<p>在JVM中的缓存是当前进行的缓存</p>
+<p>使用PageCache功能避免在JVM内存缓存，JVM有强大的GC能力，如果数据进行多次GC后放到持久里就会出现不必要的问题<br>PageCache只是第一步。。进一步Sendfile服务，在硬盘中直接到网卡 不经过应用</p>
+<h4 id="总结出来主要原因："><a href="#总结出来主要原因：" class="headerlink" title="总结出来主要原因："></a>总结出来主要原因：</h4><p>1.大量使用内存（PageCache）<br>2.发送数据不走应用（Sendfile）</p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/02/23/突然发现kafka的几个小细节/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          突然发现kafka的几个小细节
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/02/20/极速安装Storm/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">极速安装Storm</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2018 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
