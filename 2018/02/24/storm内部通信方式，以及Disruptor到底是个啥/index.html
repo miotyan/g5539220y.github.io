@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>storm内部通信方式，以及Disruptor到底是个啥 | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="在Storm的世界，每个exector都有一个缓存队列1exector---&amp;gt;nextTuple、execute 每个worker都有一个输入的总管，输出的总管总管要位置socker连接输入：serverSicjer(ip,port)监听输出：Map存入ip地址和端口号，以便找到其他机器的workerworker之间内部通信 数据从serverscoket传输过来后进行数据分发，把这些数据按">
+<meta name="keywords" content="storm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="storm内部通信方式，以及Disruptor到底是个啥">
+<meta property="og:url" content="http://yoursite.com/2018/02/24/storm内部通信方式，以及Disruptor到底是个啥/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="在Storm的世界，每个exector都有一个缓存队列1exector---&amp;gt;nextTuple、execute 每个worker都有一个输入的总管，输出的总管总管要位置socker连接输入：serverSicjer(ip,port)监听输出：Map存入ip地址和端口号，以便找到其他机器的workerworker之间内部通信 数据从serverscoket传输过来后进行数据分发，把这些数据按">
+<meta property="og:updated_time" content="2018-02-24T01:39:55.699Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="storm内部通信方式，以及Disruptor到底是个啥">
+<meta name="twitter:description" content="在Storm的世界，每个exector都有一个缓存队列1exector---&amp;gt;nextTuple、execute 每个worker都有一个输入的总管，输出的总管总管要位置socker连接输入：serverSicjer(ip,port)监听输出：Map存入ip地址和端口号，以便找到其他机器的workerworker之间内部通信 数据从serverscoket传输过来后进行数据分发，把这些数据按">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-storm内部通信方式，以及Disruptor到底是个啥" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      storm内部通信方式，以及Disruptor到底是个啥
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/24/storm内部通信方式，以及Disruptor到底是个啥/" class="article-date">
+  <time datetime="2018-02-24T01:39:00.000Z" itemprop="datePublished">2018-02-24</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="在Storm的世界，"><a href="#在Storm的世界，" class="headerlink" title="在Storm的世界，"></a>在Storm的世界，</h2><h3 id="每个exector都有一个缓存队列"><a href="#每个exector都有一个缓存队列" class="headerlink" title="每个exector都有一个缓存队列"></a>每个exector都有一个缓存队列</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">exector---&gt;nextTuple、execute</div></pre></td></tr></table></figure>
+<h2 id="每个worker都有一个输入的总管，输出的总管"><a href="#每个worker都有一个输入的总管，输出的总管" class="headerlink" title="每个worker都有一个输入的总管，输出的总管"></a>每个worker都有一个输入的总管，输出的总管</h2><h3 id="总管要位置socker连接"><a href="#总管要位置socker连接" class="headerlink" title="总管要位置socker连接"></a>总管要位置socker连接</h3><h3 id="输入：serverSicjer-ip-port-监听"><a href="#输入：serverSicjer-ip-port-监听" class="headerlink" title="输入：serverSicjer(ip,port)监听"></a>输入：serverSicjer(ip,port)监听</h3><h3 id="输出：Map存入ip地址和端口号，以便找到其他机器的worker"><a href="#输出：Map存入ip地址和端口号，以便找到其他机器的worker" class="headerlink" title="输出：Map存入ip地址和端口号，以便找到其他机器的worker"></a>输出：Map<ip+port,socket>存入ip地址和端口号，以便找到其他机器的worker</ip+port,socket></h3><h2 id="worker之间内部通信"><a href="#worker之间内部通信" class="headerlink" title="worker之间内部通信"></a>worker之间内部通信</h2><ul>
+<li><h3 id="数据从serverscoket传输过来后进行数据分发，把这些数据按照的方式存入map中"><a href="#数据从serverscoket传输过来后进行数据分发，把这些数据按照的方式存入map中" class="headerlink" title="数据从serverscoket传输过来后进行数据分发，把这些数据按照的方式存入map中."></a>数据从serverscoket传输过来后进行数据分发，把这些数据按照<taskid,inconing队列>的方式存入map中.</taskid,inconing队列></h3></li>
+<li><h3 id="这时bolt中的execute线程通过它自己的队列（Disruptor）在map中取数值到自己的队列，bolt处理后封装Tuple发送（给下游bolt）到一个对外缓冲区中，在缓冲区内里的各个tuple和要发出去的各个task一一对应（tuple1—task14、tuple2—task1-。。）"><a href="#这时bolt中的execute线程通过它自己的队列（Disruptor）在map中取数值到自己的队列，bolt处理后封装Tuple发送（给下游bolt）到一个对外缓冲区中，在缓冲区内里的各个tuple和要发出去的各个task一一对应（tuple1—task14、tuple2—task1-。。）" class="headerlink" title="这时bolt中的execute线程通过它自己的队列（Disruptor）在map中取数值到自己的队列，bolt处理后封装Tuple发送（给下游bolt）到一个对外缓冲区中，在缓冲区内里的各个tuple和要发出去的各个task一一对应（tuple1—task14、tuple2—task1.。。）"></a>这时bolt中的execute线程通过它自己的队列（Disruptor）在map中取数值到自己的队列，bolt处理后封装Tuple发送（给下游bolt）到一个对外缓冲区中，在缓冲区内里的各个tuple和要发出去的各个task一一对应（tuple1—task14、tuple2—task1.。。）</h3></li>
+<li><h3 id="最后输出大总管根据这些task信息将这些tuple发送。"><a href="#最后输出大总管根据这些task信息将这些tuple发送。" class="headerlink" title="最后输出大总管根据这些task信息将这些tuple发送。"></a>最后输出大总管根据这些task信息将这些tuple发送。</h3></li>
+</ul>
+<hr>
+<h3 id="Disruptor是一个有界队列，应用场景是生产者消费者模型。它没有锁，就没有竞争，这样速度就很快。所有访问者都记录自己的序号实现方式，并允许多个生产者消费者共享的数据模式。它的底层是一个数组（Ring-Buffer）。"><a href="#Disruptor是一个有界队列，应用场景是生产者消费者模型。它没有锁，就没有竞争，这样速度就很快。所有访问者都记录自己的序号实现方式，并允许多个生产者消费者共享的数据模式。它的底层是一个数组（Ring-Buffer）。" class="headerlink" title="Disruptor是一个有界队列，应用场景是生产者消费者模型。它没有锁，就没有竞争，这样速度就很快。所有访问者都记录自己的序号实现方式，并允许多个生产者消费者共享的数据模式。它的底层是一个数组（Ring Buffer）。"></a>Disruptor是一个有界队列，应用场景是生产者消费者模型。它没有锁，就没有竞争，这样速度就很快。所有访问者都记录自己的序号实现方式，并允许多个生产者消费者共享的数据模式。它的底层是一个数组（Ring Buffer）。</h3><h3 id="生产者生产数据在数组上逐个覆盖"><a href="#生产者生产数据在数组上逐个覆盖" class="headerlink" title="生产者生产数据在数组上逐个覆盖"></a>生产者生产数据在数组上逐个覆盖</h3><h3 id="消费者消费数据在数组上拿取数据"><a href="#消费者消费数据在数组上拿取数据" class="headerlink" title="消费者消费数据在数组上拿取数据"></a>消费者消费数据在数组上拿取数据</h3><h3 id="生产者在生产数据时要判断当前数据是否被消费再进行覆盖"><a href="#生产者在生产数据时要判断当前数据是否被消费再进行覆盖" class="headerlink" title="生产者在生产数据时要判断当前数据是否被消费再进行覆盖"></a>生产者在生产数据时要判断当前数据是否被消费再进行覆盖</h3><h3 id="生产者和消费者在队列之间都有一个序号管理器（Sequence），里面管理生产者或消费者的生产-消费的个数-以及在队列数组中对应的标号"><a href="#生产者和消费者在队列之间都有一个序号管理器（Sequence），里面管理生产者或消费者的生产-消费的个数-以及在队列数组中对应的标号" class="headerlink" title="生产者和消费者在队列之间都有一个序号管理器（Sequence），里面管理生产者或消费者的生产/消费的个数 以及在队列数组中对应的标号"></a>生产者和消费者在队列之间都有一个序号管理器（Sequence），里面管理生产者或消费者的生产/消费的个数 以及在队列数组中对应的标号</h3><h3 id="从而防止了-多个生产者或消费者之间的生产-消费冲突"><a href="#从而防止了-多个生产者或消费者之间的生产-消费冲突" class="headerlink" title="从而防止了 多个生产者或消费者之间的生产/消费冲突"></a>从而防止了 多个生产者或消费者之间的生产/消费冲突</h3><hr>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/02/24/Storm提交任务的细节/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Storm提交任务的细节</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2018 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
