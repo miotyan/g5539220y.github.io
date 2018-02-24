@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？ | M78星云档案库</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="先用一句话搞定WordCount1sc.textFile(&amp;quot;hdfs://haihan:9000/sparkTest/word.txt).flatmap(_.split(&amp;quot; &amp;quot;)).map((_,1)).reduceBykey(_+_).saveAsFile(hdfs://haihan:9000/sparkTest/out)  在这其中产生的RDD textfile">
+<meta name="keywords" content="Spark">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？">
+<meta property="og:url" content="http://yoursite.com/2018/02/24/Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？/index.html">
+<meta property="og:site_name" content="M78星云档案库">
+<meta property="og:description" content="先用一句话搞定WordCount1sc.textFile(&amp;quot;hdfs://haihan:9000/sparkTest/word.txt).flatmap(_.split(&amp;quot; &amp;quot;)).map((_,1)).reduceBykey(_+_).saveAsFile(hdfs://haihan:9000/sparkTest/out)  在这其中产生的RDD textfile">
+<meta property="og:updated_time" content="2018-02-24T14:59:05.428Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？">
+<meta name="twitter:description" content="先用一句话搞定WordCount1sc.textFile(&amp;quot;hdfs://haihan:9000/sparkTest/word.txt).flatmap(_.split(&amp;quot; &amp;quot;)).map((_,1)).reduceBykey(_+_).saveAsFile(hdfs://haihan:9000/sparkTest/out)  在这其中产生的RDD textfile">
+  
+    <link rel="alternative" href="/atom.xml" title="M78星云档案库" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/24/Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？/" class="article-date">
+  <time datetime="2018-02-24T14:58:00.000Z" itemprop="datePublished">2018-02-24</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="先用一句话搞定WordCount"><a href="#先用一句话搞定WordCount" class="headerlink" title="先用一句话搞定WordCount"></a>先用一句话搞定WordCount</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sc.textFile(&quot;hdfs://haihan:9000/sparkTest/word.txt).flatmap(_.split(&quot; &quot;)).map((_,1)).reduceBykey(_+_).saveAsFile(hdfs://haihan:9000/sparkTest/out)</div></pre></td></tr></table></figure>
+<hr>
+<h3 id="在这其中产生的RDD"><a href="#在这其中产生的RDD" class="headerlink" title="在这其中产生的RDD"></a>在这其中产生的RDD</h3><ul>
+<li><h3 id="textfile-产生了2个RDD-gt-HadoopRDD和MapPartitionsRDD"><a href="#textfile-产生了2个RDD-gt-HadoopRDD和MapPartitionsRDD" class="headerlink" title="textfile 产生了2个RDD -&gt; HadoopRDD和MapPartitionsRDD"></a>textfile 产生了2个RDD -&gt; HadoopRDD和MapPartitionsRDD</h3></li>
+<li><h3 id="flatMap-产生1个RDD-gt-MapPartitionsRDD"><a href="#flatMap-产生1个RDD-gt-MapPartitionsRDD" class="headerlink" title="flatMap 产生1个RDD -&gt; MapPartitionsRDD"></a>flatMap 产生1个RDD -&gt; MapPartitionsRDD</h3></li>
+<li><h3 id="map-产生1个RDD-gt-MapPartitionsRDD"><a href="#map-产生1个RDD-gt-MapPartitionsRDD" class="headerlink" title="map 产生1个RDD  -&gt; MapPartitionsRDD"></a>map 产生1个RDD  -&gt; MapPartitionsRDD</h3></li>
+<li><h3 id="reduceByKey产生1个RDD-gt-shuffleRDD"><a href="#reduceByKey产生1个RDD-gt-shuffleRDD" class="headerlink" title="reduceByKey产生1个RDD -&gt; shuffleRDD"></a>reduceByKey产生1个RDD -&gt; shuffleRDD</h3></li>
+</ul>
+<hr>
+<h3 id="在这其中Driver和它提交到的集群都发生了什么"><a href="#在这其中Driver和它提交到的集群都发生了什么" class="headerlink" title="在这其中Driver和它提交到的集群都发生了什么"></a>在这其中Driver和它提交到的集群都发生了什么</h3><ul>
+<li><h3 id="sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）"><a href="#sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）" class="headerlink" title="sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）"></a>sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）</h3></li>
+<li><h3 id="driver向Exector提交计算任务（stage）-driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector-那样driver会在其他节点再申请一个Exector-看这两个Exector谁快-并用快速执行完的结果）"><a href="#driver向Exector提交计算任务（stage）-driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector-那样driver会在其他节点再申请一个Exector-看这两个Exector谁快-并用快速执行完的结果）" class="headerlink" title="driver向Exector提交计算任务（stage） driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector 那样driver会在其他节点再申请一个Exector 看这两个Exector谁快 并用快速执行完的结果）"></a>driver向Exector提交计算任务（stage） driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector 那样driver会在其他节点再申请一个Exector 看这两个Exector谁快 并用快速执行完的结果）</h3></li>
+<li><h3 id="此时worker与master互相心跳感应"><a href="#此时worker与master互相心跳感应" class="headerlink" title="此时worker与master互相心跳感应"></a>此时worker与master互相心跳感应</h3></li>
+</ul>
+<hr>
+<h3 id="Driver是怎么把自己的任务提交到集群里面的"><a href="#Driver是怎么把自己的任务提交到集群里面的" class="headerlink" title="Driver是怎么把自己的任务提交到集群里面的"></a>Driver是怎么把自己的任务提交到集群里面的</h3><ul>
+<li><h3 id="第一阶段build-opeartor-DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG"><a href="#第一阶段build-opeartor-DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG" class="headerlink" title="第一阶段build opeartor DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG"></a>第一阶段build opeartor DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG</h3></li>
+<li><h3 id="第二阶段提交DAG给DAGScheduler-DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合-有几个分区就有几个Task，"><a href="#第二阶段提交DAG给DAGScheduler-DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合-有几个分区就有几个Task，" class="headerlink" title="第二阶段提交DAG给DAGScheduler:DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合,有几个分区就有几个Task，"></a>第二阶段提交DAG给DAGScheduler:DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合,有几个分区就有几个Task，</h3><pre><code>每个Task（pipeline）的操作是一样的并且串行的，只是数据不一样，Task和Task之间是并行的
+</code></pre></li>
+<li><h3 id="第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster-manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。"><a href="#第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster-manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。" class="headerlink" title="第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。"></a>第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。</h3><pre><code>（重试，TaskScheduler在提交Task时遇到问题会启动一个相同的任务来重试）
+</code></pre></li>
+<li><h3 id="第四阶段Worker：Worker启动线程执行Task-通过BlockManager管理分区。-stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果-。"><a href="#第四阶段Worker：Worker启动线程执行Task-通过BlockManager管理分区。-stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果-。" class="headerlink" title="第四阶段Worker：Worker启动线程执行Task,通过BlockManager管理分区。(stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果)。"></a>第四阶段Worker：Worker启动线程执行Task,通过BlockManager管理分区。(stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果)。</h3></li>
+</ul>
+<hr>
+<h2 id="两个重要的概念"><a href="#两个重要的概念" class="headerlink" title="两个重要的概念"></a>两个重要的概念</h2><ul>
+<li><h3 id="窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD-与其他的子RDD无关"><a href="#窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD-与其他的子RDD无关" class="headerlink" title="窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD 与其他的子RDD无关"></a>窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD 与其他的子RDD无关</h3></li>
+<li><h3 id="宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD"><a href="#宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD" class="headerlink" title="宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD"></a>宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">常见的宽依赖:reduceBykey、groupBy、join(特殊情况)</div></pre></td></tr></table></figure></li>
+</ul>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/02/24/速度开始Spark之旅/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">速度开始Spark之旅</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  			<li><a href="https://github.com/g5539220y" target="_blank"><i class="icon icon-github"></i></a></li>
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2018 圈 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+    <a href="https://github.com/g5539220y" class="mobile-nav-link">Github</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

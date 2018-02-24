@@ -28,6 +28,113 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/02/24/Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？/">Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/24/Spark-当启用了一个WordCount的时候，都发生了什么奇妙的事？/" class="article-date">
+  <time datetime="2018-02-24T14:58:00.000Z" itemprop="datePublished">2018-02-24</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="先用一句话搞定WordCount"><a href="#先用一句话搞定WordCount" class="headerlink" title="先用一句话搞定WordCount"></a>先用一句话搞定WordCount</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sc.textFile(&quot;hdfs://haihan:9000/sparkTest/word.txt).flatmap(_.split(&quot; &quot;)).map((_,1)).reduceBykey(_+_).saveAsFile(hdfs://haihan:9000/sparkTest/out)</div></pre></td></tr></table></figure>
+<hr>
+<h3 id="在这其中产生的RDD"><a href="#在这其中产生的RDD" class="headerlink" title="在这其中产生的RDD"></a>在这其中产生的RDD</h3><ul>
+<li><h3 id="textfile-产生了2个RDD-gt-HadoopRDD和MapPartitionsRDD"><a href="#textfile-产生了2个RDD-gt-HadoopRDD和MapPartitionsRDD" class="headerlink" title="textfile 产生了2个RDD -&gt; HadoopRDD和MapPartitionsRDD"></a>textfile 产生了2个RDD -&gt; HadoopRDD和MapPartitionsRDD</h3></li>
+<li><h3 id="flatMap-产生1个RDD-gt-MapPartitionsRDD"><a href="#flatMap-产生1个RDD-gt-MapPartitionsRDD" class="headerlink" title="flatMap 产生1个RDD -&gt; MapPartitionsRDD"></a>flatMap 产生1个RDD -&gt; MapPartitionsRDD</h3></li>
+<li><h3 id="map-产生1个RDD-gt-MapPartitionsRDD"><a href="#map-产生1个RDD-gt-MapPartitionsRDD" class="headerlink" title="map 产生1个RDD  -&gt; MapPartitionsRDD"></a>map 产生1个RDD  -&gt; MapPartitionsRDD</h3></li>
+<li><h3 id="reduceByKey产生1个RDD-gt-shuffleRDD"><a href="#reduceByKey产生1个RDD-gt-shuffleRDD" class="headerlink" title="reduceByKey产生1个RDD -&gt; shuffleRDD"></a>reduceByKey产生1个RDD -&gt; shuffleRDD</h3></li>
+</ul>
+<hr>
+<h3 id="在这其中Driver和它提交到的集群都发生了什么"><a href="#在这其中Driver和它提交到的集群都发生了什么" class="headerlink" title="在这其中Driver和它提交到的集群都发生了什么"></a>在这其中Driver和它提交到的集群都发生了什么</h3><ul>
+<li><h3 id="sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）"><a href="#sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）" class="headerlink" title="sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）"></a>sc（driver）提交任务并申请资源，master分配资源，worker启动进程Exector（子进程）</h3></li>
+<li><h3 id="driver向Exector提交计算任务（stage）-driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector-那样driver会在其他节点再申请一个Exector-看这两个Exector谁快-并用快速执行完的结果）"><a href="#driver向Exector提交计算任务（stage）-driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector-那样driver会在其他节点再申请一个Exector-看这两个Exector谁快-并用快速执行完的结果）" class="headerlink" title="driver向Exector提交计算任务（stage） driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector 那样driver会在其他节点再申请一个Exector 看这两个Exector谁快 并用快速执行完的结果）"></a>driver向Exector提交计算任务（stage） driver监控执行进度（如果所有Exector都执行完毕只剩下一个Exector 那样driver会在其他节点再申请一个Exector 看这两个Exector谁快 并用快速执行完的结果）</h3></li>
+<li><h3 id="此时worker与master互相心跳感应"><a href="#此时worker与master互相心跳感应" class="headerlink" title="此时worker与master互相心跳感应"></a>此时worker与master互相心跳感应</h3></li>
+</ul>
+<hr>
+<h3 id="Driver是怎么把自己的任务提交到集群里面的"><a href="#Driver是怎么把自己的任务提交到集群里面的" class="headerlink" title="Driver是怎么把自己的任务提交到集群里面的"></a>Driver是怎么把自己的任务提交到集群里面的</h3><ul>
+<li><h3 id="第一阶段build-opeartor-DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG"><a href="#第一阶段build-opeartor-DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG" class="headerlink" title="第一阶段build opeartor DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG"></a>第一阶段build opeartor DAG：构建RDD，经过一些列操作，形成了一个DAG（有向无环图），Action才会形成DAG</h3></li>
+<li><h3 id="第二阶段提交DAG给DAGScheduler-DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合-有几个分区就有几个Task，"><a href="#第二阶段提交DAG给DAGScheduler-DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合-有几个分区就有几个Task，" class="headerlink" title="第二阶段提交DAG给DAGScheduler:DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合,有几个分区就有几个Task，"></a>第二阶段提交DAG给DAGScheduler:DAGScheduler负责把DAG图划分一个一个的stage然后再以TaskSet提交，stage本质是Task的一个集合,有几个分区就有几个Task，</h3><pre><code>每个Task（pipeline）的操作是一样的并且串行的，只是数据不一样，Task和Task之间是并行的
+</code></pre></li>
+<li><h3 id="第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster-manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。"><a href="#第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster-manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。" class="headerlink" title="第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。"></a>第三阶段TaskScheduler：TaskScheduler在收到上一步的TaskSet后，通过cluster manager（master）决定在哪个Worker中启动Exector，然后dirver提交Task到Worker中的Exector，通过Work中的Exector来执行。</h3><pre><code>（重试，TaskScheduler在提交Task时遇到问题会启动一个相同的任务来重试）
+</code></pre></li>
+<li><h3 id="第四阶段Worker：Worker启动线程执行Task-通过BlockManager管理分区。-stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果-。"><a href="#第四阶段Worker：Worker启动线程执行Task-通过BlockManager管理分区。-stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果-。" class="headerlink" title="第四阶段Worker：Worker启动线程执行Task,通过BlockManager管理分区。(stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果)。"></a>第四阶段Worker：Worker启动线程执行Task,通过BlockManager管理分区。(stage划分：从窄依赖开始，当有宽依赖时就会划分一个stage，如果到最后一步没有其他的宽依赖了，则直接划分成一个Stage，一个Stage中要考虑包含多个前面RDD的计算结果)。</h3></li>
+</ul>
+<hr>
+<h2 id="两个重要的概念"><a href="#两个重要的概念" class="headerlink" title="两个重要的概念"></a>两个重要的概念</h2><ul>
+<li><h3 id="窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD-与其他的子RDD无关"><a href="#窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD-与其他的子RDD无关" class="headerlink" title="窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD 与其他的子RDD无关"></a>窄依赖：父（或者多个父）RDD的分区数据全给了一个子RDD 与其他的子RDD无关</h3></li>
+<li><h3 id="宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD"><a href="#宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD" class="headerlink" title="宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD"></a>宽依赖：父（或者多个父）RDD的分区数据给了多个子RDD</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">常见的宽依赖:reduceBykey、groupBy、join(特殊情况)</div></pre></td></tr></table></figure></li>
+</ul>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-速度开始Spark之旅" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/02/24/速度开始Spark之旅/">速度开始Spark之旅</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2018/02/24/速度开始Spark之旅/" class="article-date">
+  <time datetime="2018-02-24T14:00:00.000Z" itemprop="datePublished">2018-02-24</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="安装部署Spark"><a href="#安装部署Spark" class="headerlink" title="安装部署Spark"></a>安装部署Spark</h2><h3 id="下好包后。。。。"><a href="#下好包后。。。。" class="headerlink" title="下好包后。。。。"></a>下好包后。。。。</h3><h3 id="第一步：依旧老办法！tar-zxvf-文件名-C-地址"><a href="#第一步：依旧老办法！tar-zxvf-文件名-C-地址" class="headerlink" title="第一步：依旧老办法！tar -zxvf 文件名 -C 地址"></a>第一步：依旧老办法！tar -zxvf 文件名 -C 地址</h3><h3 id="第二步：apache的软件常规操作，修改配置文件spark-env-sh。这一看就是环境变量了-在文件的末尾加上如下"><a href="#第二步：apache的软件常规操作，修改配置文件spark-env-sh。这一看就是环境变量了-在文件的末尾加上如下" class="headerlink" title="第二步：apache的软件常规操作，修改配置文件spark-env.sh。这一看就是环境变量了.在文件的末尾加上如下"></a>第二步：apache的软件常规操作，修改配置文件spark-env.sh。这一看就是环境变量了.在文件的末尾加上如下</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">export JAVA_HOME=$&#123;JAVA_HOME&#125;   #JAVA_HOME的地址</div><div class="line">export SPARK_MASTER_IP=haihan   #master的地址 如果没配Host 一定要先配Host再直接打名</div><div class="line">export SPARK_MASTER_PORT=7077   #端口号</div></pre></td></tr></table></figure>
+<h3 id="第三步-修改Slave文件-跟hadoop中那个配置datanode地址文件差不多-在该文件中添加子节点所在的位置"><a href="#第三步-修改Slave文件-跟hadoop中那个配置datanode地址文件差不多-在该文件中添加子节点所在的位置" class="headerlink" title="第三步: 修改Slave文件(跟hadoop中那个配置datanode地址文件差不多),在该文件中添加子节点所在的位置"></a>第三步: 修改Slave文件(跟hadoop中那个配置datanode地址文件差不多),在该文件中添加子节点所在的位置</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">gy</div><div class="line">clone_gy</div></pre></td></tr></table></figure>
+<h3 id="第四步-把配置好的Spark目录发送到Worker机器上"><a href="#第四步-把配置好的Spark目录发送到Worker机器上" class="headerlink" title="第四步: 把配置好的Spark目录发送到Worker机器上"></a>第四步: 把配置好的Spark目录发送到Worker机器上</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">scp -r spark-1.5.2-bin-hadoop2.6/ gy:/home/ghadoop/app</div></pre></td></tr></table></figure>
+<h3 id="额外的：关于Spark的HA"><a href="#额外的：关于Spark的HA" class="headerlink" title="额外的：关于Spark的HA"></a>额外的：关于Spark的HA</h3><h4 id="配置好zookeeper的情况下，还是在spark-env-sh的文件里增加一条配置"><a href="#配置好zookeeper的情况下，还是在spark-env-sh的文件里增加一条配置" class="headerlink" title="配置好zookeeper的情况下，还是在spark-env.sh的文件里增加一条配置"></a>配置好zookeeper的情况下，还是在spark-env.sh的文件里增加一条配置</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Export SPARK_DAEMON_JAVA_OPTS=&quot;-Dspark.deploy.recoveryMode=ZOOKEEPER </div><div class="line">-Dspark.deploy.zookeeper.url=zk1,zk2,zk3    </div><div class="line">-Dspark.deploy.zookeeper.dir=/spark&quot;</div></pre></td></tr></table></figure>
+<h4 id="使用说明"><a href="#使用说明" class="headerlink" title="使用说明:"></a>使用说明:</h4><ol>
+<li>在node1节点上修改slaves配置文件内容指定worker节点</li>
+<li>在node1上执行sbin/start-all.sh脚本，然后在node2上执行sbin/start-master.sh启动第二个Master</li>
+</ol>
+<h2 id="开启Spark之旅"><a href="#开启Spark之旅" class="headerlink" title="开启Spark之旅"></a>开启Spark之旅</h2><h3 id="运行一下官网的蒙特卡罗求π"><a href="#运行一下官网的蒙特卡罗求π" class="headerlink" title="运行一下官网的蒙特卡罗求π"></a>运行一下官网的蒙特卡罗求π</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">./spark-1.5.2-bin-hadoop2.6/bin/spark-submit \   #提交jar命令脚本</div><div class="line">--class org.apache.spark.examples.SparkPi \      #mian方法</div><div class="line">--master spark://haihan:7077 \                   #master地址</div><div class="line">--executor-memory 1G \                           #设置内存</div><div class="line">--total-executor-cores 2 \                       #设置CPU核数</div><div class="line">/app/spark-1.5.2-bin-hadoop2.6/lib/spark-examples-1.5.2-hadoop2.6.0.jar \ #jar包位置</div><div class="line">100  #mian方法参数</div></pre></td></tr></table></figure>
+<h3 id="运行一下shell工具"><a href="#运行一下shell工具" class="headerlink" title="运行一下shell工具"></a>运行一下shell工具</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">./spark-1.5.2-bin-hadoop2.6/bin/spark-shell \</div><div class="line">--master spark://haihan:7077 \</div><div class="line">--executor-memory 2g \</div><div class="line">--total-executor-cores 2</div></pre></td></tr></table></figure>
+      
+
+      
+        
+    </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-storm内部通信方式，以及Disruptor到底是个啥" class="article article-type-post" itemscope itemprop="blogPost">
   
   <div class="article-inner">
@@ -417,112 +524,6 @@ key是在发送数据时传入的（proder.send（Keyedmessage（topic，myParti
 如果当前中的worker数量为0 
 那么新提交的topology只会标识为active 不会运行。当有空闲的资源才运行
 </code></pre><h2 id="storm也有两种运行模式：集群。本地（在当前ide中运行）"><a href="#storm也有两种运行模式：集群。本地（在当前ide中运行）" class="headerlink" title="storm也有两种运行模式：集群。本地（在当前ide中运行）"></a>storm也有两种运行模式：集群。本地（在当前ide中运行）</h2>
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-Spark的几个高级算子" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/02/07/Spark的几个高级算子/">Spark的几个高级算子</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2018/02/07/Spark的几个高级算子/" class="article-date">
-  <time datetime="2018-02-06T23:16:00.000Z" itemprop="datePublished">2018-02-07</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="1-mapPartitionsWithIndex"><a href="#1-mapPartitionsWithIndex" class="headerlink" title="1.mapPartitionsWithIndex"></a>1.mapPartitionsWithIndex</h2><h3 id="用过传入一个函数或方法来查看rdd中的分区和分区值"><a href="#用过传入一个函数或方法来查看rdd中的分区和分区值" class="headerlink" title="用过传入一个函数或方法来查看rdd中的分区和分区值"></a>用过传入一个函数或方法来查看rdd中的分区和分区值</h3><h4 id="传入函数的基本实现"><a href="#传入函数的基本实现" class="headerlink" title="传入函数的基本实现"></a>传入函数的基本实现</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">val f = (index: Int, iter: Iterator[(Int)]) =&gt; &#123;</div><div class="line">  iter.toList.map(x =&gt; &quot;[partID:&quot; +  index + &quot;, val: &quot; + x).iterator</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="2-repartition"><a href="#2-repartition" class="headerlink" title="2.repartition"></a>2.repartition</h2><h3 id="重新分区，对于已经分区的rdd来重新分区-传入一个Int类型"><a href="#重新分区，对于已经分区的rdd来重新分区-传入一个Int类型" class="headerlink" title="重新分区，对于已经分区的rdd来重新分区 传入一个Int类型"></a>重新分区，对于已经分区的rdd来重新分区 传入一个Int类型</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">val rdd1 = sc.parallelize(Array(1,2,3,4,5,6),2)</div><div class="line">val rdd2 = rdd1.repartition(3)</div></pre></td></tr></table></figure>
-<h2 id="3-coalesce"><a href="#3-coalesce" class="headerlink" title="3.coalesce"></a>3.coalesce</h2><h3 id="合并，对已经分好的分区进行合并操作-传入一个Int类型和一个布尔类型-是否shuffle"><a href="#合并，对已经分好的分区进行合并操作-传入一个Int类型和一个布尔类型-是否shuffle" class="headerlink" title="合并，对已经分好的分区进行合并操作 传入一个Int类型和一个布尔类型(是否shuffle)"></a>合并，对已经分好的分区进行合并操作 传入一个Int类型和一个布尔类型(是否shuffle)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">val rdd3 = rdd2.coalesce(2,true)</div></pre></td></tr></table></figure>
-<h2 id="4-collectAsMap"><a href="#4-collectAsMap" class="headerlink" title="4.collectAsMap"></a>4.collectAsMap</h2><h3 id="把rdd中的对偶元组转化成map格式"><a href="#把rdd中的对偶元组转化成map格式" class="headerlink" title="把rdd中的对偶元组转化成map格式"></a>把rdd中的对偶元组转化成map格式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">val rdd = sc.parallelize(List((&quot;a&quot;, 1), (&quot;b&quot;, 2)))</div><div class="line">rdd.collectAsMap</div></pre></td></tr></table></figure>
-<h2 id="5-countByKey-countByValues"><a href="#5-countByKey-countByValues" class="headerlink" title="5.countByKey(countByValues)"></a>5.countByKey(countByValues)</h2><h3 id="统计key出现的次数结果以map显示-统计value出现次数结果以map显示"><a href="#统计key出现的次数结果以map显示-统计value出现次数结果以map显示" class="headerlink" title="统计key出现的次数结果以map显示(统计value出现次数结果以map显示)"></a>统计key出现的次数结果以map显示(统计value出现次数结果以map显示)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">val rdd1 = sc.parallelize(List((&quot;g&quot;, 1), (&quot;g&quot;, 2), (&quot;y&quot;, 2), (&quot;y&quot;, 2), (&quot;h&quot;, 1)))</div><div class="line">rdd1.countByKey</div><div class="line">rdd1.countByValue</div></pre></td></tr></table></figure>
-<h2 id="6-filterByRange"><a href="#6-filterByRange" class="headerlink" title="6.filterByRange"></a>6.filterByRange</h2><h3 id="先对范围排序再截取范围，在对偶元组中以String为准"><a href="#先对范围排序再截取范围，在对偶元组中以String为准" class="headerlink" title="先对范围排序再截取范围，在对偶元组中以String为准"></a>先对范围排序再截取范围，在对偶元组中以String为准</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">val rdd1 = sc.parallelize(List((&quot;e&quot;, 5), (&quot;c&quot;, 3), (&quot;d&quot;, 4), (&quot;c&quot;, 2), (&quot;a&quot;, 1)))</div><div class="line">val rdd2 = rdd1.filterByRange(&quot;b&quot;, &quot;d&quot;).collect</div></pre></td></tr></table></figure>
-<h2 id="7-flatMapValues"><a href="#7-flatMapValues" class="headerlink" title="7.flatMapValues"></a>7.flatMapValues</h2><h3 id="切分value中的值，使key对value一一对应"><a href="#切分value中的值，使key对value一一对应" class="headerlink" title="切分value中的值，使key对value一一对应"></a>切分value中的值，使key对value一一对应</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">val rdd3 = sc.parallelize(List((&quot;a&quot;, &quot;1 2&quot;), (&quot;b&quot;, &quot;3 4&quot;)))</div><div class="line">val rdd4 = rdd3.flatMapValues(_.split(&quot; &quot;))</div><div class="line">rdd4.collect</div></pre></td></tr></table></figure>
-<p>结果：Array[(String, String)] = Array((a,1), (a,2), (b,3), (b,4))  </p>
-<h2 id="8-foldByKey"><a href="#8-foldByKey" class="headerlink" title="8.foldByKey"></a>8.foldByKey</h2><h3 id="把相同的key中的values相加起来"><a href="#把相同的key中的values相加起来" class="headerlink" title="把相同的key中的values相加起来"></a>把相同的key中的values相加起来</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">val rdd1 = sc.parallelize(List(&quot;dog&quot;, &quot;wolf&quot;, &quot;cat&quot;, &quot;bear&quot;), 2)</div><div class="line">val rdd2 = rdd1.map(x =&gt; (x.length, x))</div><div class="line">val rdd3 = rdd2.foldByKey(&quot;&quot;)(_+_)</div><div class="line">rdd3.collect</div></pre></td></tr></table></figure>
-<p>结果:Array[(Int, String)] = Array((4,wolfbear), (3,catdog))</p>
-<h2 id="9-foreachPartition"><a href="#9-foreachPartition" class="headerlink" title="9.foreachPartition"></a>9.foreachPartition</h2><h3 id="在不生成新的rdd1的情况下遍历或操作rdd"><a href="#在不生成新的rdd1的情况下遍历或操作rdd" class="headerlink" title="在不生成新的rdd1的情况下遍历或操作rdd"></a>在不生成新的rdd1的情况下遍历或操作rdd</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">val rdd1 = sc.parallelize(List(1, 2, 3, 4, 5, 6, 7, 8, 9), 3)</div><div class="line">rdd1.foreachPartition(x =&gt; println(x.reduce(_ + _)))</div></pre></td></tr></table></figure>
-<h2 id="10-keyBy"><a href="#10-keyBy" class="headerlink" title="10.keyBy"></a>10.keyBy</h2><h3 id="以传入的参数做key"><a href="#以传入的参数做key" class="headerlink" title="以传入的参数做key"></a>以传入的参数做key</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">val rdd1 = sc.parallelize(List(&quot;dog&quot;, &quot;salmon&quot;, &quot;salmon&quot;, &quot;rat&quot;, &quot;elephant&quot;), 3)</div><div class="line">val rdd2 = rdd1.keyBy(_.length)</div><div class="line">rdd2.collect</div></pre></td></tr></table></figure>
-<h2 id="11-keys-values"><a href="#11-keys-values" class="headerlink" title="11.keys values"></a>11.keys values</h2><h3 id="直接取出key或values的值"><a href="#直接取出key或values的值" class="headerlink" title="直接取出key或values的值"></a>直接取出key或values的值</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">val rdd1 = sc.parallelize(List(&quot;dog&quot;, &quot;tiger&quot;, &quot;lion&quot;, &quot;cat&quot;, &quot;panther&quot;, &quot;eagle&quot;), 2)</div><div class="line">val rdd2 = rdd1.map(x =&gt; (x.length, x))</div><div class="line">rdd2.keys.collect</div><div class="line">rdd2.values.collect</div></pre></td></tr></table></figure>
-
-      
-
-      
-        
-    </div>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-我与Scala的心路历程续----Scala面向对象" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/01/24/我与Scala的心路历程续----Scala面向对象/">我与Scala的心路历程续----Scala面向对象</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2018/01/24/我与Scala的心路历程续----Scala面向对象/" class="article-date">
-  <time datetime="2018-01-23T16:02:00.000Z" itemprop="datePublished">2018-01-24</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="定义类"><a href="#定义类" class="headerlink" title="定义类"></a>定义类</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">class gy&#123;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="定义包内可见"><a href="#定义包内可见" class="headerlink" title="定义包内可见"></a>定义包内可见</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">private[haihan520] class gy&#123;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="将类设定为构造器私有化-意思是：只能在伴生对象和类中里new"><a href="#将类设定为构造器私有化-意思是：只能在伴生对象和类中里new" class="headerlink" title="将类设定为构造器私有化(意思是：只能在伴生对象和类中里new)"></a>将类设定为构造器私有化(意思是：只能在伴生对象和类中里new)</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">class person private&#123;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="伴生对象就是与类同名，类型是object"><a href="#伴生对象就是与类同名，类型是object" class="headerlink" title="伴生对象就是与类同名，类型是object"></a>伴生对象就是与类同名，类型是object</h3><h3 id="在伴生对象里面定义的方法都是静态的"><a href="#在伴生对象里面定义的方法都是静态的" class="headerlink" title="在伴生对象里面定义的方法都是静态的"></a>在伴生对象里面定义的方法都是静态的</h3><hr>
-<p>##apply方法</p>
-<p>###apply方法是在调用伴生对象时调用的方法(类似与伴生对象的构造器)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">object gy extends App &#123;</div><div class="line">  def apply() = &#123;</div><div class="line">     println(&quot;apply 构造器启动&quot;)</div><div class="line">  &#125;</div><div class="line">  val p = gy()</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<h2 id="类中的主构造器"><a href="#类中的主构造器" class="headerlink" title="类中的主构造器"></a>类中的主构造器</h2><h3 id="主构造器里有两个变量，同时添加了成员变量和它们的get-set方法。类括号里的代码都是属于主构造器的（除了定义的方法和函数"><a href="#主构造器里有两个变量，同时添加了成员变量和它们的get-set方法。类括号里的代码都是属于主构造器的（除了定义的方法和函数" class="headerlink" title="主构造器里有两个变量，同时添加了成员变量和它们的get/set方法。类括号里的代码都是属于主构造器的（除了定义的方法和函数)"></a>主构造器里有两个变量，同时添加了成员变量和它们的get/set方法。类括号里的代码都是属于主构造器的（除了定义的方法和函数)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">private[haihan520] class person(val id: Long,var name: String)&#123;</div><div class="line">             ................</div><div class="line">             ................</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="类中的从构造器"><a href="#类中的从构造器" class="headerlink" title="类中的从构造器"></a>类中的从构造器</h2><h3 id="从构造器通过this方法定义，但是从构造器里一定要调用主构造器"><a href="#从构造器通过this方法定义，但是从构造器里一定要调用主构造器" class="headerlink" title="从构造器通过this方法定义，但是从构造器里一定要调用主构造器"></a>从构造器通过this方法定义，但是从构造器里一定要调用主构造器</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">def this（id ： Long，name: String,age: Int)&#123;</div><div class="line">   this（id,name)    //这句话必须写在第一行</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<hr>
-<h2 id="定义抽象类"><a href="#定义抽象类" class="headerlink" title="定义抽象类"></a>定义抽象类</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">abstract class Animal&#123;</div><div class="line"> def run()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="定义特征-类似Java8中的接口，其中的方法可以实现"><a href="#定义特征-类似Java8中的接口，其中的方法可以实现" class="headerlink" title="定义特征(类似Java8中的接口，其中的方法可以实现)"></a>定义特征(类似Java8中的接口，其中的方法可以实现)</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">trait flyable&#123;</div><div class="line"> def fly()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="同时实现接口和抽象类（必须把抽象类放前面，Scala只支持单继承"><a href="#同时实现接口和抽象类（必须把抽象类放前面，Scala只支持单继承" class="headerlink" title="同时实现接口和抽象类（必须把抽象类放前面，Scala只支持单继承)"></a>同时实现接口和抽象类（必须把抽象类放前面，Scala只支持单继承)</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">class people extends Animal with Flyable&#123;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="但是在重写抽象方法必须加-override"><a href="#但是在重写抽象方法必须加-override" class="headerlink" title="但是在重写抽象方法必须加 override"></a>但是在重写抽象方法必须加 override</h3><hr>
-<h2 id="样式匹配"><a href="#样式匹配" class="headerlink" title="样式匹配"></a>样式匹配</h2><h3 id="scala中支持对格式，内容或类等进行匹配，类似于（switch）"><a href="#scala中支持对格式，内容或类等进行匹配，类似于（switch）" class="headerlink" title="scala中支持对格式，内容或类等进行匹配，类似于（switch）"></a>scala中支持对格式，内容或类等进行匹配，类似于（switch）</h3><h3 id="基本格式"><a href="#基本格式" class="headerlink" title="基本格式"></a>基本格式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">.....match &#123;</div><div class="line">   case ....</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="第一种匹配Array中的String"><a href="#第一种匹配Array中的String" class="headerlink" title="第一种匹配Array中的String"></a>第一种匹配Array中的String</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">val arr = Array(&quot;gy&quot;,&quot;hh&quot;,&quot;gyaihh&quot;)</div><div class="line">val res = arr(Random.nextInt(arr.length))</div><div class="line">    println(res)</div><div class="line">    res match &#123;</div><div class="line">      case &quot;gy&quot; =&gt; println(&quot;高源&quot;)</div><div class="line">      case &quot;hh&quot; =&gt; println(&quot;海涵&quot;)</div><div class="line">      case &quot;gyaihh&quot; =&gt; println(&quot;高源爱海涵&quot;)</div><div class="line">      case _ =&gt; println(&quot;找不到选项&quot;)</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
-<h3 id="第二种匹配Array中的类型"><a href="#第二种匹配Array中的类型" class="headerlink" title="第二种匹配Array中的类型"></a>第二种匹配Array中的类型</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">val arr = Array(1,3.0,-3.0,&quot;gyaihh&quot;,Demo)</div><div class="line">val res = arr(Random.nextInt(arr.length))</div><div class="line">  res match &#123;</div><div class="line">  case x: Int =&gt; println(&quot;Int&quot;+x)</div><div class="line">  case y: Double if(y&gt;0) =&gt; println(&quot;Double&quot;+y)</div><div class="line">  case z: String =&gt; println(z)</div><div class="line">  case _ =&gt; throw new Exception(&quot;no elem&quot;)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="第三种匹配Array、List、tuple中的格式内容"><a href="#第三种匹配Array、List、tuple中的格式内容" class="headerlink" title="第三种匹配Array、List、tuple中的格式内容"></a>第三种匹配Array、List、tuple中的格式内容</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">val arr = Array(8,8,8)</div><div class="line">arr match &#123;</div><div class="line">  case Array(0,x,y) =&gt; println(x+&quot; &quot;+y)</div><div class="line">  case Array(1,2,5) =&gt; println(&quot;yes&quot;)</div><div class="line">  case Array(1,_*) =&gt; println(&quot;1 ....&quot;)</div><div class="line">  case _ =&gt; println(&quot;no pp&quot;)</div><div class="line">&#125;</div><div class="line">----------------------------------</div><div class="line">val lst = List(0,1,2)</div><div class="line">lst match &#123;</div><div class="line">  case 0 :: Nil =&gt; println(&quot;only 0&quot;)</div><div class="line">  case x :: y :: Nil =&gt; println(s&quot;x=$x,y=$y&quot;)</div><div class="line">  case 0 :: a =&gt; println(s&quot;0...$a&quot;)</div><div class="line">  case _ =&gt; println(&quot;no elem&quot;)</div><div class="line">&#125;</div><div class="line">----------------------------------</div><div class="line">val tuple = (2,3,3)</div><div class="line">tuple match &#123;</div><div class="line">  case (1,x,y) =&gt; println(s&quot;tuple: 1,$x,$y&quot;)</div><div class="line">  case (_,z,5) =&gt; println(z)</div><div class="line">  case _ =&gt; println(&quot;no&quot;)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="样例类"><a href="#样例类" class="headerlink" title="样例类"></a>样例类</h2><h3 id="想要通过这种方法匹配类，就必须定义样例类"><a href="#想要通过这种方法匹配类，就必须定义样例类" class="headerlink" title="想要通过这种方法匹配类，就必须定义样例类"></a>想要通过这种方法匹配类，就必须定义样例类</h3><h3 id="在类前加case，格式："><a href="#在类前加case，格式：" class="headerlink" title="在类前加case，格式："></a>在类前加case，格式：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">case class submitTask(name: String,age: Int)</div></pre></td></tr></table></figure>
-<h3 id="在使用样例类是可以不用new，来结合到match里"><a href="#在使用样例类是可以不用new，来结合到match里" class="headerlink" title="在使用样例类是可以不用new，来结合到match里"></a>在使用样例类是可以不用new，来结合到match里</h3><h3 id="同时也可以定义样例对象-case-object"><a href="#同时也可以定义样例对象-case-object" class="headerlink" title="同时也可以定义样例对象 case object"></a>同时也可以定义样例对象 case object</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">case class Submit(name :String,age: Int)</div><div class="line">case class insert(score: Int)</div><div class="line">case object update</div><div class="line">object Demo5 extends App &#123;</div><div class="line">    val arr = Array(Submit(&quot;gg&quot;,123),insert(99),update)</div><div class="line">    arr(0) match &#123;</div><div class="line">      case insert(score) =&gt; println(s&quot;$score&quot;)</div><div class="line">      case Submit(name,age) =&gt; println(s&quot;name$name,age$age&quot;)</div><div class="line">      case update =&gt; println(&quot;update&quot;)</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="偏函数"><a href="#偏函数" class="headerlink" title="偏函数"></a>偏函数</h2><h3 id="如果不想写match-就定义一个函数传入输入类型和输出类型-这个函数就是偏函数-PartialFunction"><a href="#如果不想写match-就定义一个函数传入输入类型和输出类型-这个函数就是偏函数-PartialFunction" class="headerlink" title="如果不想写match 就定义一个函数传入输入类型和输出类型 这个函数就是偏函数(PartialFunction)"></a>如果不想写match 就定义一个函数传入输入类型和输出类型 这个函数就是偏函数(PartialFunction)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">def PartialFunction[Any ,Int] =&#123;</div><div class="line">         匹配的类型,返回的类型</div><div class="line">  case ....</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h3 id="通过定义了一个偏函数来确定map中的值，从而实现和match一样的方法"><a href="#通过定义了一个偏函数来确定map中的值，从而实现和match一样的方法" class="headerlink" title="通过定义了一个偏函数来确定map中的值，从而实现和match一样的方法"></a>通过定义了一个偏函数来确定map中的值，从而实现和match一样的方法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">val map = Map(&quot;5&quot;-&gt;2,&quot;2&quot;-&gt;3)</div><div class="line">  map.get(&quot;1&quot;) match &#123;</div><div class="line">    case Some(i) =&gt; println(i)</div><div class="line">    case None =&gt; println(&quot;none&quot;)</div><div class="line">  &#125;</div><div class="line">  println(map.getOrElse(&quot;2&quot;,&quot;wu&quot;))</div><div class="line"> //函数1</div><div class="line"> def f1: PartialFunction[String,Int] = &#123;</div><div class="line">   case &quot;one&quot; =&gt; 1</div><div class="line">   case &quot;two&quot; =&gt; 2</div><div class="line">   case _ =&gt; 0</div><div class="line"> &#125;</div><div class="line"></div><div class="line"> def f2(num:Int) : String = num match &#123;</div><div class="line">   case 1 =&gt; &quot;one&quot;</div><div class="line">   case 2 =&gt; &quot;two&quot;</div><div class="line"> &#125;</div><div class="line"></div><div class="line"> println(f1(&quot;1&quot;))</div><div class="line"> println(f2(1))</div></pre></td></tr></table></figure>
-<hr>
-<h2 id="Option类"><a href="#Option类" class="headerlink" title="Option类"></a>Option类</h2><h3 id="Option类中有两个重要概念-Some和None"><a href="#Option类中有两个重要概念-Some和None" class="headerlink" title="Option类中有两个重要概念:Some和None"></a>Option类中有两个重要概念:Some和None</h3><h3 id="Some-i）查找数组或映射中的值，没有就返回None"><a href="#Some-i）查找数组或映射中的值，没有就返回None" class="headerlink" title="Some(i）查找数组或映射中的值，没有就返回None"></a>Some(i）查找数组或映射中的值，没有就返回None</h3><h3 id="None就是一个样例对象"><a href="#None就是一个样例对象" class="headerlink" title="None就是一个样例对象"></a>None就是一个样例对象</h3><h3 id="实现和getorElse一样的功能"><a href="#实现和getorElse一样的功能" class="headerlink" title="实现和getorElse一样的功能"></a>实现和getorElse一样的功能</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">val map = Map(&quot;1&quot;-&gt;2,&quot;2&quot;-&gt;3)</div><div class="line">map.get(&quot;1&quot;) match &#123;</div><div class="line">  case Some(i) =&gt; println(i)</div><div class="line">  case None =&gt; println(&quot;0&quot;)</div><div class="line">&#125;</div><div class="line">val res = map.getOrElse(&quot;1&quot;,0)</div><div class="line">println(res)</div></pre></td></tr></table></figure>
-
       
 
       
